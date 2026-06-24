@@ -6,6 +6,9 @@
   const LOCAL_KEY = "goco_tawiran_records_v1";
   const SEQ_KEY = "goco_tawiran_sequence_v1";
   const CREATED_BY_KEY = "goco_tawiran_created_by";
+  const PROJECT_ARCHITECT_KEY = "goco_tawiran_project_architect";
+  const PROJECT_IN_CHARGE_KEY = "goco_tawiran_project_in_charge";
+  const SITE_ZONE_KEY = "goco_tawiran_site_zone";
 
   const LOOKUPS = {
     floorLevels: ["Ground Floor", "Second Floor", "Roof", "Exterior / Facade", "Site / Yard", "General"],
@@ -49,10 +52,11 @@
   ];
 
   const DISPLAY_COLUMNS = [
-    "Record ID", "Issue ID", "Photo ID", "Date", "Time", "Floor Level", "Area", "Room / Location",
-    "Trade / Scope", "Category", "Status", "Priority", "Severity", "Progress %", "Drawing Reference",
-    "Responsible Person", "Target Date", "Issue / Concern / Note", "Schedule Impact", "Cost Impact",
-    "Photo URL", "Google Drive File ID", "Date Resolved", "Verified By", "Remarks", "Created By", "Timestamp"
+    "Record ID", "Issue ID", "Photo ID", "Date", "Time", "Project Architect", "Project In-Charge", "Site / Zone",
+    "Floor Level", "Area", "Room / Location", "Trade / Scope", "Category", "Status", "Priority", "Severity",
+    "Progress %", "Drawing Reference", "Responsible Person", "Target Date", "Issue / Concern / Note",
+    "Schedule Impact", "Cost Impact", "Photo URL", "Google Drive File ID", "Photo Folder Path", "Google Drive Folder ID",
+    "Date Resolved", "Verified By", "Remarks", "Created By", "Timestamp"
   ];
 
   let activeRecords = [];
@@ -158,6 +162,9 @@
     setValue("severity", "Medium");
     setValue("progressPercent", "0%");
     setValue("drawingReference", "Not Applicable");
+    setValue("projectArchitect", localStorage.getItem(PROJECT_ARCHITECT_KEY) || CFG.PROJECT_ARCHITECT || "");
+    setValue("projectInCharge", localStorage.getItem(PROJECT_IN_CHARGE_KEY) || CFG.PROJECT_IN_CHARGE || "");
+    setValue("siteZone", localStorage.getItem(SITE_ZONE_KEY) || CFG.DEFAULT_SITE_ZONE || CFG.PROJECT_LOCATION || "Brgy. Tawiran, Calapan City");
     setValue("createdBy", localStorage.getItem(CREATED_BY_KEY) || "");
   }
 
@@ -227,6 +234,9 @@
       const photo = photoFile ? await preparePhotoPayload(photoFile, record["Photo ID"]) : null;
 
       if (record["Created By"]) localStorage.setItem(CREATED_BY_KEY, record["Created By"]);
+      if (record["Project Architect"]) localStorage.setItem(PROJECT_ARCHITECT_KEY, record["Project Architect"]);
+      if (record["Project In-Charge"]) localStorage.setItem(PROJECT_IN_CHARGE_KEY, record["Project In-Charge"]);
+      if (record["Site / Zone"]) localStorage.setItem(SITE_ZONE_KEY, record["Site / Zone"]);
 
       upsertLocalRecord({ ...record, "Local Sync Status": "Pending upload" });
 
@@ -246,6 +256,8 @@
         ...record,
         "Photo URL": result.photoUrl || record["Photo URL"] || "",
         "Google Drive File ID": result.fileId || record["Google Drive File ID"] || "",
+        "Photo Folder Path": result.folderPath || record["Photo Folder Path"] || "",
+        "Google Drive Folder ID": result.folderId || record["Google Drive Folder ID"] || "",
         "Local Sync Status": "Synced"
       };
       upsertLocalRecord(savedRecord);
@@ -282,6 +294,8 @@
     record["Timestamp"] = now.toISOString();
     record["Photo URL"] = "";
     record["Google Drive File ID"] = "";
+    record["Photo Folder Path"] = record["Photo Folder Path"] || "";
+    record["Google Drive Folder ID"] = record["Google Drive Folder ID"] || "";
     return record;
   }
 
@@ -500,10 +514,12 @@
             <div class="report-id">${escapeHtml(idText)}</div>
           </div>
           <div class="report-subrow">
+            <span>Site: <strong>${escapeHtml(field(record, "Site / Zone") || CFG.PROJECT_LOCATION || "Brgy. Tawiran")}</strong></span>
             <span>Priority: <strong>${escapeHtml(priority)}</strong></span>
             <span>Severity: <strong>${escapeHtml(severity)}</strong></span>
             <span>Drawing: <strong>${escapeHtml(field(record, "Drawing Reference") || "N/A")}</strong></span>
             <span>Responsible: <strong>${escapeHtml(field(record, "Responsible Person") || "Unassigned")}</strong></span>
+            <span>Folder: <strong>${escapeHtml(field(record, "Photo Folder Path") || "Auto-foldered in Drive")}</strong></span>
           </div>
           <div class="report-note-block">
             <div class="report-note-label">${escapeHtml(footerLabel)}</div>
@@ -511,8 +527,8 @@
             ${field(record, "Remarks") ? `<p class="report-remarks"><strong>Remarks:</strong> ${escapeHtml(field(record, "Remarks"))}</p>` : ""}
           </div>
           <div class="report-signoff">
-            <span>Target: <strong>${escapeHtml(field(record, "Target Date") || "—")}</strong></span>
-            <span>Resolved: <strong>${escapeHtml(field(record, "Date Resolved") || "—")}</strong></span>
+            <span>Architect: <strong>${escapeHtml(field(record, "Project Architect") || "—")}</strong></span>
+            <span>In-Charge: <strong>${escapeHtml(field(record, "Project In-Charge") || field(record, "Created By") || "—")}</strong></span>
             <span>Verified by: <strong>${escapeHtml(field(record, "Verified By") || "—")}</strong></span>
           </div>
         </article>
@@ -707,6 +723,7 @@
   function renderCell(record, col) {
     const value = field(record, col);
     if (col === "Photo URL" && (value || field(record, "Google Drive File ID"))) return `<a href="${escapeAttr(getPhotoLinkUrl(record))}" target="_blank" rel="noopener">Open Photo</a>`;
+    if (col === "Google Drive Folder ID" && value) return `<a href="https://drive.google.com/drive/folders/${escapeAttr(value)}" target="_blank" rel="noopener">Open Folder</a>`;
     if (col === "Status" && value) return `<span class="badge ${slug(value)}">${escapeHtml(value)}</span>`;
     if (["Priority", "Severity"].includes(col) && value) return `<span class="badge ${slug(value)}">${escapeHtml(value)}</span>`;
     return escapeHtml(value);

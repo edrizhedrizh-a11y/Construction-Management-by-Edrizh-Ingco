@@ -29,6 +29,9 @@ const ISSUE_HEADERS = [
   'Issue ID',
   'Photo ID',
   'Project Name',
+  'Project Architect',
+  'Project In-Charge',
+  'Site / Zone',
   'Date',
   'Time',
   'Week Number',
@@ -49,6 +52,8 @@ const ISSUE_HEADERS = [
   'Cost Impact',
   'Photo URL',
   'Google Drive File ID',
+  'Photo Folder Path',
+  'Google Drive Folder ID',
   'Date Resolved',
   'Verified By',
   'Remarks',
@@ -57,24 +62,24 @@ const ISSUE_HEADERS = [
 ];
 
 const PHOTO_HEADERS = [
-  'Record ID', 'Issue ID', 'Photo ID', 'Project Name', 'Date', 'Time', 'Week Number',
-  'Floor Level', 'Area', 'Room / Location', 'Trade / Scope', 'Category', 'Status',
-  'Photo URL', 'Google Drive File ID', 'Caption / Note', 'Created By', 'Timestamp'
+  'Record ID', 'Issue ID', 'Photo ID', 'Project Name', 'Project Architect', 'Project In-Charge', 'Site / Zone',
+  'Date', 'Time', 'Week Number', 'Floor Level', 'Area', 'Room / Location', 'Trade / Scope', 'Category', 'Status',
+  'Photo URL', 'Google Drive File ID', 'Photo Folder Path', 'Google Drive Folder ID', 'Caption / Note', 'Created By', 'Timestamp'
 ];
 
 const DESIGN_HEADERS = [
-  'Record ID', 'Issue ID', 'Project Name', 'Date', 'Time', 'Week Number', 'Floor Level',
-  'Area', 'Room / Location', 'Trade / Scope', 'Category', 'Status', 'Priority', 'Severity',
-  'Drawing Reference', 'Responsible Person', 'Target Date', 'Approval / Decision Needed',
-  'Schedule Impact', 'Cost Impact', 'Photo URL', 'Google Drive File ID', 'Date Resolved',
-  'Verified By', 'Remarks', 'Created By', 'Timestamp'
+  'Record ID', 'Issue ID', 'Project Name', 'Project Architect', 'Project In-Charge', 'Site / Zone',
+  'Date', 'Time', 'Week Number', 'Floor Level', 'Area', 'Room / Location', 'Trade / Scope', 'Category',
+  'Status', 'Priority', 'Severity', 'Drawing Reference', 'Responsible Person', 'Target Date', 'Approval / Decision Needed',
+  'Schedule Impact', 'Cost Impact', 'Photo URL', 'Google Drive File ID', 'Photo Folder Path', 'Google Drive Folder ID',
+  'Date Resolved', 'Verified By', 'Remarks', 'Created By', 'Timestamp'
 ];
 
 const AREA_NOTE_HEADERS = [
-  'Record ID', 'Issue ID', 'Photo ID', 'Project Name', 'Date', 'Time', 'Week Number',
-  'Floor Level', 'Area', 'Room / Location', 'Trade / Scope', 'Category', 'Status',
+  'Record ID', 'Issue ID', 'Photo ID', 'Project Name', 'Project Architect', 'Project In-Charge', 'Site / Zone',
+  'Date', 'Time', 'Week Number', 'Floor Level', 'Area', 'Room / Location', 'Trade / Scope', 'Category', 'Status',
   'Priority', 'Severity', 'Progress %', 'Drawing Reference', 'Note', 'Photo URL',
-  'Google Drive File ID', 'Created By', 'Timestamp'
+  'Google Drive File ID', 'Photo Folder Path', 'Google Drive Folder ID', 'Created By', 'Timestamp'
 ];
 
 const LOOKUPS = {
@@ -173,6 +178,7 @@ function saveRecord_(payload) {
   const now = new Date();
 
   record['Project Name'] = record['Project Name'] || PROJECT_NAME;
+  record['Site / Zone'] = record['Site / Zone'] || 'Brgy. Tawiran, Calapan City';
   record['Record ID'] = record['Record ID'] || makeId_('GT');
   record['Issue ID'] = record['Issue ID'] || makeId_('GI');
   record['Photo ID'] = record['Photo ID'] || makeId_('GP');
@@ -185,6 +191,8 @@ function saveRecord_(payload) {
     const fileInfo = savePhoto_(payload.photo, record);
     record['Photo URL'] = fileInfo.url;
     record['Google Drive File ID'] = fileInfo.id;
+    record['Photo Folder Path'] = fileInfo.folderPath || '';
+    record['Google Drive Folder ID'] = fileInfo.folderId || '';
   }
 
   appendMappedRow_(ss.getSheetByName('Issue Records'), ISSUE_HEADERS, record);
@@ -219,7 +227,10 @@ function saveRecord_(payload) {
     issueId: record['Issue ID'],
     photoId: record['Photo ID'],
     photoUrl: record['Photo URL'] || '',
-    fileId: record['Google Drive File ID'] || ''
+    fileId: record['Google Drive File ID'] || '',
+    folderPath: record['Photo Folder Path'] || '',
+    folderId: record['Google Drive Folder ID'] || '',
+    viewUrl: record['Google Drive File ID'] ? `https://drive.google.com/file/d/${record['Google Drive File ID']}/view?usp=sharing` : ''
   };
 }
 
@@ -283,25 +294,54 @@ function savePhoto_(photo, record) {
     throw new Error('DRIVE_FOLDER_ID is empty. Paste your Google Drive folder ID in google-apps-script.gs.');
   }
 
-  const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+  const root = DriveApp.getFolderById(DRIVE_FOLDER_ID);
   const rawBase64 = String(photo.data).replace(/^data:[^;]+;base64,/, '');
   const bytes = Utilities.base64Decode(rawBase64);
+
+  const datePart = sanitizeFilePart_(record['Date'] || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'));
+  const projectFolderName = sanitizeFolderName_(record['Project Name'] || PROJECT_NAME);
+  const siteFolderName = sanitizeFolderName_(record['Site / Zone'] || 'Brgy. Tawiran, Calapan City');
+  const floorFolderName = sanitizeFolderName_(record['Floor Level'] || 'General');
+  const areaFolderName = sanitizeFolderName_(record['Area'] || record['Room / Location'] || 'General Area');
+  const tradeFolderName = sanitizeFolderName_(record['Trade / Scope'] || record['Category'] || 'General Scope');
+
+  // Drive folder structure:
+  // Root Folder / GOCO TAWIRAN / YYYY-MM-DD / Site-Zone / Floor Level / Area / Trade-Scope
+  const targetFolder = getOrCreateNestedFolder_(root, [
+    projectFolderName,
+    datePart,
+    siteFolderName,
+    floorFolderName,
+    areaFolderName,
+    tradeFolderName
+  ]);
+
   const safeArea = sanitizeFilePart_(record['Area'] || 'Area');
   const safeTrade = sanitizeFilePart_(record['Trade / Scope'] || 'Scope');
+  const safeStatus = sanitizeFilePart_(record['Status'] || 'Status');
   const safeId = sanitizeFilePart_(record['Photo ID'] || makeId_('GP'));
-  const fileName = `${safeId}_${safeArea}_${safeTrade}.jpg`;
+  const fileName = `${safeId}_${safeArea}_${safeTrade}_${safeStatus}.jpg`;
   const blob = Utilities.newBlob(bytes, photo.mimeType || 'image/jpeg', fileName);
-  const file = folder.createFile(blob);
+  const file = targetFolder.createFile(blob);
 
   if (SHARE_PHOTOS_PUBLICLY) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   }
 
-  return { id: file.getId(), url: file.getUrl() };
+  const fileId = file.getId();
+  const folderId = targetFolder.getId();
+  const folderPath = [projectFolderName, datePart, siteFolderName, floorFolderName, areaFolderName, tradeFolderName].join(' / ');
+  const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+  return { id: fileId, url: thumbnailUrl, viewUrl: file.getUrl(), folderId: folderId, folderPath: folderPath };
 }
 
 function setupIfMissing_(ss) {
-  if (!ss.getSheetByName('Issue Records')) setupGocoTawiranSheet();
+  ensureSheetWithHeaders_(ss, 'Issue Records', ISSUE_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Photo Records', PHOTO_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Design Approvals', DESIGN_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Area Notes', AREA_NOTE_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Lookups', ['Type', 'Value']);
+  ensureSheetWithHeaders_(ss, 'Dashboard Export', ['Metric', 'Value', 'Updated At']);
 }
 
 function ensureSheetWithHeaders_(ss, sheetName, headers) {
@@ -414,6 +454,25 @@ function getIsoWeek_(date) {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getOrCreateNestedFolder_(rootFolder, names) {
+  return names.reduce((folder, name) => getOrCreateFolder_(folder, name), rootFolder);
+}
+
+function getOrCreateFolder_(parent, name) {
+  const safeName = sanitizeFolderName_(name);
+  const existing = parent.getFoldersByName(safeName);
+  if (existing.hasNext()) return existing.next();
+  return parent.createFolder(safeName);
+}
+
+function sanitizeFolderName_(value) {
+  return String(value || 'General')
+    .replace(/[\\/:*?"<>|#%{}~&]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80) || 'General';
 }
 
 function sanitizeFilePart_(value) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "goco-tawiran-site-v3-image-fix";
+const CACHE_NAME = "goco-tawiran-site-v4-team-folder";
 const APP_SHELL = [
   "./",
   "./index.html",
