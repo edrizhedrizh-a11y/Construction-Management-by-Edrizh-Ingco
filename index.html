@@ -11,6 +11,7 @@
   <script defer src="config.js"></script>
   <script defer src="app.js"></script>
 </head>
+
 <body data-page="home">
   <div class="topbar">
     <div class="topbar-inner">
@@ -21,8 +22,13 @@
           <p class="brand-subtitle">Site Inspection + Project Documentation</p>
         </div>
       </div>
+
       <nav class="desktop-nav" data-nav></nav>
-      <div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div>
+
+      <div class="sync-pill" data-sync-pill>
+        <span class="sync-dot"></span>
+        <span data-sync-label>Checking</span>
+      </div>
     </div>
   </div>
 
@@ -32,17 +38,39 @@
         <p class="hero-eyebrow">Mobile-first construction log</p>
         <h2>Capture site photos, issues, approvals, notes, punch list, and progress per area.</h2>
         <p>Built for iPhone/iPad site work. Records save to Google Sheets and photos save to Google Drive through Apps Script.</p>
+
         <div class="project-tags">
           <span class="tag">📍 Brgy. Tawiran, Calapan City</span>
           <span class="tag">🏗 Two-storey residential/commercial</span>
           <span class="tag">📄 A-1 to A-5 drawing refs</span>
         </div>
       </div>
+
       <div class="quick-actions">
-        <a class="quick-card" href="board.html"><strong>Photo Issue Board</strong><span>Printable construction photo cards</span></a>
-        <a class="quick-card" href="design-approval.html"><strong>Design Approval</strong><span>Owner/design decisions and approvals</span></a>
-        <a class="quick-card" href="area-notes.html"><strong>Area Notes</strong><span>Room-based inspection notes</span></a>
-        <a class="quick-card" href="dashboard.html"><strong>Dashboard</strong><span>Open, action, critical, overdue</span></a>
+        <a class="quick-card" href="board.html">
+          <strong>Photo Issue Board</strong>
+          <span>Printable construction photo cards</span>
+        </a>
+
+        <a class="quick-card" href="design-approval.html">
+          <strong>Design Approval</strong>
+          <span>Owner/design decisions and approvals</span>
+        </a>
+
+        <a class="quick-card" href="area-notes.html">
+          <strong>Area Notes</strong>
+          <span>Room-based inspection notes</span>
+        </a>
+
+        <a class="quick-card" href="dashboard.html">
+          <strong>Dashboard</strong>
+          <span>Open, action, critical, overdue</span>
+        </a>
+
+        <a class="quick-card" href="site-progress/index.html">
+          <strong>Site Progress Tracker</strong>
+          <span>Progress %, area inspection, photos, punchlist, and bossing report</span>
+        </a>
       </div>
     </section>
 
@@ -57,10 +85,12 @@
           <label for="recordId">Record ID</label>
           <input id="recordId" name="Record ID" readonly>
         </div>
+
         <div class="field">
           <label for="issueId">Issue ID</label>
           <input id="issueId" name="Issue ID" readonly>
         </div>
+
         <div class="field">
           <label for="photoId">Photo ID</label>
           <input id="photoId" name="Photo ID" readonly>
@@ -76,10 +106,12 @@
           <label for="projectArchitect">Project Architect</label>
           <input id="projectArchitect" name="Project Architect" placeholder="e.g. Arch. Wilfredo O. Apacible, uap">
         </div>
+
         <div class="field">
           <label for="projectInCharge">Project In-Charge / Site Inspector</label>
           <input id="projectInCharge" name="Project In-Charge" placeholder="Architect / inspector na may hawak ng project">
         </div>
+
         <div class="field">
           <label for="siteZone">Site / Zone</label>
           <input id="siteZone" name="Site / Zone" placeholder="e.g. Brgy. Tawiran / Main Building / Frontage">
@@ -104,22 +136,27 @@
           <label class="required" for="floorLevel">Floor Level</label>
           <select id="floorLevel" name="Floor Level" data-options="floorLevels" required></select>
         </div>
+
         <div class="field">
           <label class="required" for="area">Area</label>
           <select id="area" name="Area" data-options="areas" required></select>
         </div>
+
         <div class="field">
           <label for="roomLocation">Room / Location</label>
           <input id="roomLocation" name="Room / Location" placeholder="e.g. Unit 1 Bedroom wall A / Grid B-2">
         </div>
+
         <div class="field">
           <label class="required" for="tradeScope">Trade / Scope</label>
           <select id="tradeScope" name="Trade / Scope" data-options="trades" required></select>
         </div>
+
         <div class="field">
           <label class="required" for="category">Category</label>
           <select id="category" name="Category" data-options="categories" required></select>
         </div>
+
         <div class="field">
           <label for="drawingReference">Drawing Reference</label>
           <select id="drawingReference" name="Drawing Reference" data-options="drawingRefs"></select>
@@ -135,22 +172,27 @@
           <label class="required" for="status">Status</label>
           <select id="status" name="Status" data-options="statuses" required></select>
         </div>
+
         <div class="field">
           <label for="priority">Priority</label>
           <select id="priority" name="Priority" data-options="prioritySeverity"></select>
         </div>
+
         <div class="field">
           <label for="severity">Severity</label>
           <select id="severity" name="Severity" data-options="prioritySeverity"></select>
         </div>
+
         <div class="field">
           <label for="progressPercent">Progress %</label>
           <select id="progressPercent" name="Progress %" data-options="progress"></select>
         </div>
+
         <div class="field">
           <label for="responsiblePerson">Responsible Person</label>
           <input id="responsiblePerson" name="Responsible Person" placeholder="Contractor / Foreman / Supplier / Owner">
         </div>
+
         <div class="field">
           <label for="targetDate">Target Date</label>
           <input id="targetDate" name="Target Date" type="date">
@@ -166,6 +208,7 @@
           <label class="required" for="issueNote">Issue / Concern / Note</label>
           <textarea id="issueNote" name="Issue / Concern / Note" required placeholder="Describe the issue, concern, approval needed, site note, punch list item, or progress status. Include exact location and required action."></textarea>
         </div>
+
         <div class="field">
           <label for="scheduleImpact">Schedule Impact</label>
           <select id="scheduleImpact" name="Schedule Impact">
@@ -174,6 +217,7 @@
             <option value="Potential">Potential</option>
           </select>
         </div>
+
         <div class="field">
           <label for="costImpact">Cost Impact</label>
           <select id="costImpact" name="Cost Impact">
@@ -182,18 +226,22 @@
             <option value="Potential">Potential</option>
           </select>
         </div>
+
         <div class="field">
           <label for="dateResolved">Date Resolved</label>
           <input id="dateResolved" name="Date Resolved" type="date">
         </div>
+
         <div class="field">
           <label for="verifiedBy">Verified By</label>
           <input id="verifiedBy" name="Verified By" placeholder="Architect / Inspector / Owner">
         </div>
+
         <div class="field">
           <label for="createdBy">Created By</label>
           <input id="createdBy" name="Created By" placeholder="Your name">
         </div>
+
         <div class="field full">
           <label for="remarks">Remarks</label>
           <textarea id="remarks" name="Remarks" placeholder="Additional reminders, instructions, or verification comments."></textarea>
