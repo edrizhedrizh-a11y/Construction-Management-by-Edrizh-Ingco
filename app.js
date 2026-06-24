@@ -465,7 +465,8 @@
     }
 
     container.innerHTML = filtered.map(record => {
-      const imageUrl = field(record, "Photo URL");
+      const imageUrl = getDisplayPhotoUrl(record);
+      const photoLinkUrl = getPhotoLinkUrl(record);
       const cardClass = page === "design-approval" ? "approval-card" : page === "area-notes" ? "note-card" : "issue-card";
       const status = field(record, "Status") || "Open";
       const severity = field(record, "Severity") || "Medium";
@@ -476,7 +477,7 @@
       const footerLabel = page === "design-approval" ? "APPROVAL / DECISION NOTE" : page === "area-notes" ? "AREA INSPECTION NOTE" : "CONCERN / ISSUE / NOTE";
       const title = page === "design-approval" ? "DESIGN APPROVAL" : page === "area-notes" ? "AREA NOTES" : "PHOTO ISSUE BOARD";
       const photoHtml = imageUrl
-        ? `<a class="report-photo" href="${escapeAttr(imageUrl)}" target="_blank" rel="noopener"><img src="${escapeAttr(imageUrl)}" alt="Site photo"></a>`
+        ? `<a class="report-photo" href="${escapeAttr(photoLinkUrl || imageUrl)}" target="_blank" rel="noopener"><img src="${escapeAttr(imageUrl)}" alt="Site photo" loading="lazy" referrerpolicy="no-referrer"></a>`
         : `<div class="report-photo report-photo-empty">INSERT PHOTO HERE</div>`;
 
       return `
@@ -654,6 +655,33 @@
     return records.reduce((sum, record) => sum + (predicate(record) ? 1 : 0), 0);
   }
 
+
+  function getDisplayPhotoUrl(record) {
+    const photoUrl = field(record, "Photo URL");
+    const fileId = field(record, "Google Drive File ID") || extractDriveFileId(photoUrl);
+    if (fileId) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
+    return photoUrl || "";
+  }
+
+  function getPhotoLinkUrl(record) {
+    const photoUrl = field(record, "Photo URL");
+    const fileId = field(record, "Google Drive File ID") || extractDriveFileId(photoUrl);
+    if (fileId) return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
+    return photoUrl || "";
+  }
+
+  function extractDriveFileId(value) {
+    const text = String(value || "");
+    if (!text) return "";
+    let match = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    match = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    match = text.match(/uc\?export=(?:view|download)&id=([a-zA-Z0-9_-]+)/);
+    if (match) return match[1];
+    return "";
+  }
+
   function renderRecordsTable(records) {
     const container = document.getElementById("recordsTableContainer");
     if (!container) return;
@@ -678,7 +706,7 @@
 
   function renderCell(record, col) {
     const value = field(record, col);
-    if (col === "Photo URL" && value) return `<a href="${escapeAttr(value)}" target="_blank" rel="noopener">Open Photo</a>`;
+    if (col === "Photo URL" && (value || field(record, "Google Drive File ID"))) return `<a href="${escapeAttr(getPhotoLinkUrl(record))}" target="_blank" rel="noopener">Open Photo</a>`;
     if (col === "Status" && value) return `<span class="badge ${slug(value)}">${escapeHtml(value)}</span>`;
     if (["Priority", "Severity"].includes(col) && value) return `<span class="badge ${slug(value)}">${escapeHtml(value)}</span>`;
     return escapeHtml(value);

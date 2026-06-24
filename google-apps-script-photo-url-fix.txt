@@ -1,0 +1,16 @@
+GOCO TAWIRAN - Google Apps Script Photo URL Fix
+
+In google-apps-script.gs, find this line inside savePhoto_():
+
+  return { id: file.getId(), url: file.getUrl() };
+
+Replace it with this:
+
+  const fileId = file.getId();
+  const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+  return { id: fileId, url: thumbnailUrl, viewUrl: file.getUrl() };
+
+Then deploy a new Web App version:
+Apps Script > Deploy > Manage deployments > pencil/edit > Version: New version > Deploy.
+
+Do not change SPREADSHEET_ID, DRIVE_FOLDER_ID, or config.js.
