@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TAWIRAN GOCO — Site Progress & Inspection Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">TAWIRAN GOCO</p>
+      <h1>Site Progress & Inspection Dashboard</h1>
+      <p class="subhead">Area-based inspection, photo proof, punchlist, and turnover-ready progress tracking.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-light" id="printReportBtn" type="button">Print Report</button>
+      <button class="btn btn-primary" data-tab-target="inspection" type="button">+ New Inspection</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Main navigation">
+    <button class="tab active" data-tab="dashboard" type="button">Dashboard</button>
+    <button class="tab" data-tab="inspection" type="button">New Inspection</button>
+    <button class="tab" data-tab="records" type="button">Records</button>
+    <button class="tab" data-tab="punchlist" type="button">Punchlist</button>
+    <button class="tab" data-tab="report" type="button">Bossing Report</button>
+    <button class="tab" data-tab="settings" type="button">Settings</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="tab-panel active">
+      <div class="status-banner" id="siteStageBanner">
+        <strong>Current site stage:</strong> Civil finishing / plastering + roofing completion.
+      </div>
+
+      <div class="card-grid stats-grid">
+        <article class="stat-card hero-stat">
+          <span>Overall Site Progress</span>
+          <strong id="overallProgressText">0%</strong>
+          <div class="progress-shell"><div id="overallProgressBar" class="progress-fill"></div></div>
+          <small>Cost-weighted using category budgets.</small>
+        </article>
+        <article class="stat-card">
+          <span>Turnover-Ready Scopes</span>
+          <strong id="turnoverCount">0</strong>
+          <small>Accepted / 100% records.</small>
+        </article>
+        <article class="stat-card">
+          <span>Open Punchlist</span>
+          <strong id="openPunchCount">0</strong>
+          <small>Issues not yet closed.</small>
+        </article>
+        <article class="stat-card">
+          <span>Total Inspections</span>
+          <strong id="inspectionCount">0</strong>
+          <small>Saved inspection entries.</small>
+        </article>
+      </div>
+
+      <section class="card two-col">
+        <div>
+          <div class="section-title-row">
+            <div>
+              <h2>Progress by Category</h2>
+              <p>Each category progress comes from the latest records per area and scope.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Budget Weight</th>
+                  <th>Actual Progress</th>
+                  <th>Earned Project %</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="categoryProgressRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="chart-card">
+          <canvas id="progressCanvas" width="720" height="520" aria-label="Progress chart"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2>Latest Site Records</h2>
+            <p>Most recent inspection inputs with photo proof and issues.</p>
+          </div>
+          <button class="btn btn-light" data-tab-target="records" type="button">View all</button>
+        </div>
+        <div id="latestRecords" class="record-list empty-state">No records yet. Add your first inspection.</div>
+      </section>
+    </section>
+
+    <section id="inspection" class="tab-panel">
+      <form id="inspectionForm" class="card form-card">
+        <div class="section-title-row">
+          <div>
+            <h2>New Site Inspection</h2>
+            <p>Use this on site. Pick area, category, scope, status, progress, and attach photos.</p>
+          </div>
+          <span class="pill">100% = turnover-ready</span>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Inspection date/time
+            <input id="inspectionDate" name="inspectionDate" type="datetime-local" required />
+          </label>
+          <label>
+            Inspector
+            <input id="inspector" name="inspector" type="text" placeholder="Your name" />
+          </label>
+          <label>
+            Area / Room
+            <select id="area" name="area" required></select>
+          </label>
+          <label>
+            Category / Trade
+            <select id="category" name="category" required></select>
+          </label>
+          <label>
+            Scope Item
+            <select id="scope" name="scope" required></select>
+          </label>
+          <label>
+            Status
+            <select id="status" name="status" required></select>
+          </label>
+          <label>
+            Planned Quantity
+            <input id="plannedQty" name="plannedQty" type="number" step="0.01" min="0" placeholder="e.g. 1678.20" />
+          </label>
+          <label>
+            Actual Completed Quantity
+            <input id="actualQty" name="actualQty" type="number" step="0.01" min="0" placeholder="e.g. 900" />
+          </label>
+          <label>
+            Unit
+            <input id="unit" name="unit" type="text" placeholder="sqm, pcs, lot, lm" />
+          </label>
+          <label>
+            Scope Weight / Importance
+            <input id="scopeWeight" name="scopeWeight" type="number" step="0.1" min="0.1" value="1" />
+          </label>
+        </div>
+
+        <div class="progress-input-card">
+          <div>
+            <label for="progressInput">Actual progress %</label>
+            <input id="progressInput" name="progressInput" type="range" min="0" max="100" value="0" />
+          </div>
+          <strong id="progressValue">0%</strong>
+        </div>
+        <div id="progressWarning" class="warning-box hidden"></div>
+
+        <fieldset class="checklist">
+          <legend>100% Turnover-Ready Checklist</legend>
+          <label><input id="checkQuantity" type="checkbox" /> Quantity complete</label>
+          <label><input id="checkSpecs" type="checkbox" /> Correct as per plan/specs</label>
+          <label><input id="checkWorkmanship" type="checkbox" /> Workmanship acceptable</label>
+          <label><input id="checkTesting" type="checkbox" /> Required test passed / not applicable</label>
+          <label><input id="checkPunchClosed" type="checkbox" /> Punchlist closed</label>
+          <label><input id="checkAccepted" type="checkbox" /> Accepted for billing/reporting</label>
+        </fieldset>
+
+        <div class="form-grid">
+          <label>
+            Workmanship rating
+            <select id="workmanship" name="workmanship">
+              <option>Good</option>
+              <option>Acceptable</option>
+              <option>Needs Repair</option>
+              <option>Rejected</option>
+            </select>
+          </label>
+          <label>
+            Responsible person / team
+            <input id="responsible" name="responsible" type="text" placeholder="Contractor / Foreman / Trade" />
+          </label>
+          <label>
+            Target completion date
+            <input id="targetDate" name="targetDate" type="date" />
+          </label>
+          <label>
+            Punchlist status
+            <select id="punchStatus" name="punchStatus">
+              <option>None</option>
+              <option>Open</option>
+              <option>Ongoing</option>
+              <option>For Verification</option>
+              <option>Closed</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="full-label">
+          Issues / Remarks / Required Action
+          <textarea id="remarks" name="remarks" rows="4" placeholder="Example: Roof gutter incomplete; pending flashing and leak test."></textarea>
+        </label>
+
+        <div class="photo-panel">
+          <div>
+            <h3>Photo Proof</h3>
+            <p>Use camera on iPhone/iPad. Photos are compressed and saved locally in this browser.</p>
+          </div>
+          <input id="photoInput" type="file" accept="image/*" multiple capture="environment" />
+          <div id="photoPreview" class="photo-grid"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-light" id="clearFormBtn" type="button">Clear Form</button>
+          <button class="btn btn-primary" type="submit">Save Inspection</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="records" class="tab-panel">
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2>Inspection Records</h2>
+            <p>Search, filter, edit status, export backup, or delete records.</p>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-light" id="exportJsonBtn" type="button">Export JSON</button>
+            <button class="btn btn-light" id="exportCsvBtn" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <input id="recordSearch" type="search" placeholder="Search area, scope, remarks..." />
+          <select id="recordCategoryFilter"><option value="">All categories</option></select>
+          <select id="recordStatusFilter"><option value="">All statuses</option></select>
+        </div>
+        <div id="recordsList" class="record-list empty-state">No records yet.</div>
+      </section>
+    </section>
+
+    <section id="punchlist" class="tab-panel">
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2>Punchlist & Site Issues</h2>
+            <p>Issues are pulled from records with remarks, punchlist status, needs repair, or rejected workmanship.</p>
+          </div>
+        </div>
+        <div id="punchlistItems" class="record-list empty-state">No open punchlist yet.</div>
+      </section>
+    </section>
+
+    <section id="report" class="tab-panel">
+      <section class="card report-card" id="reportContent">
+        <div class="report-header">
+          <div>
+            <p class="eyebrow">TAWIRAN GOCO</p>
+            <h2>Site Progress Inspection Report</h2>
+            <p id="reportDateLine">Report Date: —</p>
+          </div>
+          <div class="report-score">
+            <span>Overall Physical Progress</span>
+            <strong id="reportOverallProgress">0%</strong>
+          </div>
+        </div>
+        <div id="reportBody"></div>
+      </section>
+    </section>
+
+    <section id="settings" class="tab-panel">
+      <section class="card">
+        <div class="section-title-row">
+          <div>
+            <h2>Settings</h2>
+            <p>Edit project details, areas, category budgets, and default scope items.</p>
+          </div>
+          <button class="btn btn-primary" id="saveSettingsBtn" type="button">Save Settings</button>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Project Name
+            <input id="settingProjectName" type="text" />
+          </label>
+          <label>
+            Location
+            <input id="settingLocation" type="text" />
+          </label>
+          <label>
+            Prepared By
+            <input id="settingPreparedBy" type="text" />
+          </label>
+          <label>
+            Current Stage Label
+            <input id="settingStage" type="text" />
+          </label>
+        </div>
+
+        <label class="full-label">
+          Areas / Rooms, one per line
+          <textarea id="settingAreas" rows="6"></textarea>
+        </label>
+
+        <h3>Category Budgets & Scope Items</h3>
+        <p class="hint">Budgets are used as weights. This setup splits Roofing/Metal Works from Civil to avoid hiding roof progress, while total remains aligned to the project subtotal.</p>
+        <div id="categorySettings" class="settings-list"></div>
+
+        <div class="danger-zone">
+          <h3>Backup / Reset</h3>
+          <div class="button-row">
+            <label class="btn btn-light file-btn">
+              Import JSON
+              <input id="importJsonInput" type="file" accept="application/json" />
+            </label>
+            <button class="btn btn-light" id="loadDemoBtn" type="button">Load Sample Records</button>
+            <button class="btn btn-danger" id="clearAllBtn" type="button">Clear All Data</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <template id="recordTemplate">
+    <article class="record-card">
+      <div class="record-topline">
+        <div>
+          <strong class="record-title"></strong>
+          <p class="record-meta"></p>
+        </div>
+        <span class="status-chip"></span>
+      </div>
+      <div class="mini-progress"><div></div></div>
+      <p class="record-remarks"></p>
+      <div class="record-photos"></div>
+      <div class="record-actions"></div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
