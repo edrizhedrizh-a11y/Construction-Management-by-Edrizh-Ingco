@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2a37">
+  <title>Dashboard | GOCO TAWIRAN</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body data-page="dashboard">
+  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">Dashboard</h1><p class="brand-subtitle">Project issue and progress snapshot</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
+  <main class="app-shell">
+    <section class="page-heading">
+      <div>
+        <p class="hero-eyebrow">Live summary</p>
+        <h2>GOCO TAWIRAN Dashboard</h2>
+        <p>Total records, open issues, for action, approvals, critical items, overdue items, and distribution per area/trade.</p>
+      </div>
+      <div class="page-actions no-print">
+        <button class="btn secondary" data-refresh>Refresh</button>
+        <button class="btn warning" onclick="window.print()">Print / Save PDF</button>
+      </div>
+    </section>
+    <section class="dashboard-grid" id="dashboardStats"></section>
+    <section class="form-grid">
+      <div class="panel"><h3>Records per Area</h3><div class="bar-list" id="areaBars"></div></div>
+      <div class="panel"><h3>Records per Trade / Scope</h3><div class="bar-list" id="tradeBars"></div></div>
+      <div class="panel"><h3>Records per Floor Level</h3><div class="bar-list" id="floorBars"></div></div>
+      <div class="panel"><h3>Open / Action Items</h3><div id="actionList"></div></div>
+    </section>
+  </main>
+  <nav class="bottom-nav" data-bottom-nav></nav>
+</body>
+</html>
