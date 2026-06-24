@@ -170,3 +170,10 @@ https://YOUR-GITHUB-PAGES-URL/?v=50
 ## Security Note
 
 This is a lightweight Google Apps Script login suitable for project documentation workflow. It is not a banking-grade authentication system. Keep your Apps Script Web App URL private, manage users in the Sheet, and change the default admin PIN.
+
+
+## v6 No Login Build
+
+Login is disabled. The app tracks people using Project Architect, Project In-Charge, Responsible Person, Created By, and Verified By.
+
+Upload the no-config ZIP so your working `config.js` is not overwritten.

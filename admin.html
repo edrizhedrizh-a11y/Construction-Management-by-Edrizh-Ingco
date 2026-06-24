@@ -12,7 +12,7 @@
   <script defer src="app.js"></script>
 </head>
 <body data-page="admin">
-  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">Master Admin</h1><p class="brand-subtitle">Users, in-charge, exports, and logs</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">Master Dashboard</h1><p class="brand-subtitle">In-charge, exports, and logs</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
   <main class="app-shell">
     <section class="page-heading">
       <div>
@@ -21,12 +21,11 @@
         <p>Review records by created-by, in-charge, area, status, and exported report JPGs saved in Google Drive.</p>
       </div>
       <div class="page-actions no-print">
-        <a class="btn secondary" href="login.html">Switch User</a>
         <button class="btn secondary" data-refresh>Refresh</button>
       </div>
     </section>
 
-    <section class="panel"><h3>Active Account</h3><div id="adminUserBox"></div></section>
+    <section class="panel"><h3>No Login Mode</h3><div id="adminUserBox"></div></section>
 
     <section class="form-grid">
       <div class="panel"><h3>Records by User / In-Charge</h3><div class="bar-list" id="adminUserBars"></div></div>
@@ -36,8 +35,8 @@
     </section>
 
     <section class="panel">
-      <h3>User management</h3>
-      <p class="muted">Add/edit users in the Google Sheet tab named <strong>Users</strong>. Master Admin can view all records. Site Inspectors can be limited by site/area.</p>
+      <h3>User / In-Charge Tracking</h3>
+      <p class="muted">Login is disabled. Use the form fields <strong>Created By</strong>, <strong>Project In-Charge</strong>, and <strong>Responsible Person</strong> to identify who handled each record.</p>
     </section>
   </main>
   <nav class="bottom-nav" data-bottom-nav></nav>

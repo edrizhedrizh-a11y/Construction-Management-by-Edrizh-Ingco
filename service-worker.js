@@ -1,4 +1,4 @@
-const CACHE_NAME = "goco-tawiran-site-v5-login-report";
+const CACHE_NAME = "goco-tawiran-site-v6-no-login";
 const APP_SHELL = [
   "./",
   "./index.html",

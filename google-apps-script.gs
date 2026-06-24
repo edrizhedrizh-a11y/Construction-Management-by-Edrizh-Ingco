@@ -1,10 +1,10 @@
 /*****
- * GOCO TAWIRAN Site Inspection App v5 - Google Apps Script Backend
+ * GOCO TAWIRAN Site Inspection App v6 No-Login - Google Apps Script Backend
  * Features:
  * - Google Sheet database
  * - Google Drive photo folders
- * - User login from Users tab
- * - Master / inspector filtering
+ * - No login required
+ * - Master view through app filters
  * - A4 board JPG upload to Google Drive
  * - Report export log
  *****/
@@ -76,10 +76,11 @@ function doPost(e) {
     const payload = parsePostPayload_(e);
     const action = payload.action || 'createRecord';
 
-    if (action === 'login') return jsonOutput_(login_(payload, e));
+    if (action === 'login') return jsonOutput_({ ok: false, message: 'Login system is disabled in the no-login build.' });
     if (action === 'setup') { setupGocoTawiranSheet(); return jsonOutput_({ ok: true, message: 'Setup completed.' }); }
 
-    const user = validateSession_(payload.sessionToken, false);
+    // No-login build: records and report exports are accepted without a user session.
+    const user = validateSession_(payload.sessionToken, true);
 
     if (action === 'createRecord') return jsonOutput_(saveRecord_(payload, user));
     if (action === 'getImageData') return jsonOutput_(getImageData_(payload.fileId, user));
@@ -296,8 +297,6 @@ function getImageData_(fileId, user) {
 }
 
 function uploadReport_(report, user) {
-  if (!user) throw new Error('Login required to upload reports.');
-  if (user.canExportReports === false) throw new Error('This user is not allowed to export reports.');
   if (!DRIVE_FOLDER_ID) throw new Error('DRIVE_FOLDER_ID is empty.');
   if (!report || !report.data) throw new Error('Missing report JPG data.');
 
@@ -332,8 +331,8 @@ function uploadReport_(report, user) {
     'Total Pages': report.totalPages || '',
     'Record Count': report.recordCount || '',
     'Filters': report.filters || '',
-    'Exported By': user.fullName,
-    'Exported By Email': user.email,
+    'Exported By': (user && user.fullName) || report.exportedBy || 'Site Inspector',
+    'Exported By Email': (user && user.email) || report.exportedByEmail || '',
     'Timestamp': now.toISOString()
   };
   appendMappedRow_(getSpreadsheet_().getSheetByName('Report Exports'), REPORT_EXPORT_HEADERS, row);

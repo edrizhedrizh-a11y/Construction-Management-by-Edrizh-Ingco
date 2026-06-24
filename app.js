@@ -53,8 +53,7 @@
     { page: "area-notes", href: "area-notes.html", icon: "⌖", label: "Notes" },
     { page: "dashboard", href: "dashboard.html", icon: "◷", label: "Dash" },
     { page: "records", href: "records.html", icon: "☰", label: "Log" },
-    { page: "admin", href: "admin.html", icon: "◎", label: "Admin" },
-    { page: "login", href: "login.html", icon: "👤", label: "User" }
+    { page: "admin", href: "admin.html", icon: "◎", label: "Admin" }
   ];
 
   const DISPLAY_COLUMNS = [
@@ -72,7 +71,6 @@
   function init() {
     registerServiceWorker();
     renderNavigation();
-    renderUserPill();
     updateSyncPill();
     window.addEventListener("online", updateSyncPill);
     window.addEventListener("offline", updateSyncPill);
@@ -109,17 +107,7 @@
   }
 
   function renderUserPill() {
-    const topbar = document.querySelector(".topbar-inner");
-    if (!topbar || topbar.querySelector(".user-pill")) return;
-    const user = getCurrentUser();
-    const href = user ? "login.html" : "login.html";
-    const label = user ? `${user.fullName || user.email || "User"}` : "Login";
-    const role = user ? (user.role || "User") : "Required";
-    const link = document.createElement("a");
-    link.className = "user-pill no-print";
-    link.href = href;
-    link.innerHTML = `<span class="user-avatar">${escapeHtml(getInitials(label))}</span><span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(role)}</small></span>`;
-    topbar.appendChild(link);
+    // Login system disabled in v6 no-login build.
   }
 
   function updateSyncPill(message) {
@@ -584,7 +572,7 @@
 
 
   function requiresLogin() {
-    return CFG.REQUIRE_LOGIN !== false;
+    return false;
   }
 
   function getCurrentUser() {
@@ -623,56 +611,17 @@
   }
 
   function initLoginPage() {
-    const session = getCurrentSession();
-    const form = document.getElementById("loginForm");
-    const notice = document.getElementById("loginNotice");
+    localStorage.removeItem(USER_SESSION_KEY);
     const currentBox = document.getElementById("currentUserBox");
-    const logoutBtn = document.getElementById("logoutBtn");
-
     if (currentBox) {
-      const user = session?.user;
-      currentBox.innerHTML = user ? `
-        <div class="current-user-card">
-          <div class="user-avatar big">${escapeHtml(getInitials(user.fullName || user.email))}</div>
-          <div>
-            <h3>${escapeHtml(user.fullName || user.email)}</h3>
-            <p>${escapeHtml(user.role || "User")} · ${escapeHtml(user.email || "")}</p>
-            <p>Site: <strong>${escapeHtml(user.assignedSite || "All")}</strong> · Area: <strong>${escapeHtml(user.assignedArea || "All")}</strong></p>
-          </div>
-        </div>` : `<div class="empty-state">No active user session. Login using the Users tab credentials from Google Sheet.</div>`;
+      currentBox.innerHTML = `<div class="empty-state">Login system is disabled. Records are tracked using the Created By, Project In-Charge, and Responsible Person fields.</div>`;
     }
-
-    if (logoutBtn) logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem(USER_SESSION_KEY);
-      showLoginNotice("Logged out. You can login again below.", "warn");
-      setTimeout(() => location.reload(), 400);
-    });
-
-    if (form) form.addEventListener("submit", async event => {
-      event.preventDefault();
-      const btn = document.getElementById("loginBtn");
-      if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
-      try {
-        if (!isApiConfigured()) throw new Error("Apps Script URL is not configured yet.");
-        const email = document.getElementById("loginEmail")?.value.trim();
-        const pin = document.getElementById("loginPin")?.value.trim();
-        const result = await postToAppsScript({ action: "login", email, pin });
-        if (!result || result.ok === false) throw new Error(result?.message || "Login failed.");
-        localStorage.setItem(USER_SESSION_KEY, JSON.stringify({ sessionToken: result.sessionToken, user: result.user, loginAt: new Date().toISOString() }));
-        showLoginNotice(`Welcome, ${result.user.fullName || result.user.email}.`, "ok");
-        const next = new URLSearchParams(location.search).get("next") || "index.html";
-        setTimeout(() => { location.href = next; }, 500);
-      } catch (error) {
-        showLoginNotice(error.message, "error");
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = "Login"; }
-      }
-    });
-
-    function showLoginNotice(message, type) {
-      if (!notice) return;
-      notice.textContent = message;
-      notice.className = `notice show ${type || "ok"}`;
+    const form = document.getElementById("loginForm");
+    if (form) form.style.display = "none";
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.textContent = "Go to Add Record";
+      logoutBtn.addEventListener("click", () => location.href = "index.html");
     }
   }
 
@@ -689,18 +638,9 @@
   }
 
   function renderAdminPage(records) {
-    const user = getCurrentUser();
     const box = document.getElementById("adminUserBox");
     if (box) {
-      box.innerHTML = user ? `
-        <div class="current-user-card">
-          <div class="user-avatar big">${escapeHtml(getInitials(user.fullName || user.email))}</div>
-          <div>
-            <h3>${escapeHtml(user.fullName || user.email)}</h3>
-            <p>${escapeHtml(user.role || "User")} · ${escapeHtml(user.email || "")}</p>
-            <p>View all: <strong>${user.canViewAll ? "Yes" : "No"}</strong> · Export reports: <strong>${user.canExportReports ? "Yes" : "No"}</strong></p>
-          </div>
-        </div>` : `<div class="empty-state">No user session found.</div>`;
+      box.innerHTML = `<div class="empty-state">Login system is disabled. This master view shows all synced project records. User tracking is based on Created By, Project In-Charge, and Responsible Person fields.</div>`;
     }
 
     renderBars("adminUserBars", groupCountMulti(records, ["Created By", "Project In-Charge", "Responsible Person"]));
@@ -763,11 +703,6 @@
     const uploadBtn = document.getElementById("uploadReportBtn");
     const output = document.getElementById("reportPreview");
     if (!output) return;
-    const user = getCurrentUser();
-    if (requiresLogin() && !user) {
-      output.innerHTML = `<div class="empty-state">Login first before exporting reports.</div>`;
-      return;
-    }
     const records = getReportRecords();
     if (!records.length) {
       output.innerHTML = `<div class="empty-state">No records matched your report filters.</div>`;
@@ -1086,7 +1021,9 @@
             recordCount: page.recordCount,
             pageNumber: page.pageNumber,
             totalPages: page.totalPages,
-            filters: collectFilterSummary()
+            filters: collectFilterSummary(),
+            exportedBy: localStorage.getItem(CREATED_BY_KEY) || "Site Inspector",
+            exportedByEmail: ""
           }
         });
         if (!result || result.ok === false) throw new Error(result?.message || "Report upload failed.");

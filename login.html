@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1f2a37">
-  <title>Login | GOCO TAWIRAN</title>
+  <title>Login Removed | GOCO TAWIRAN</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
@@ -12,43 +12,13 @@
   <script defer src="app.js"></script>
 </head>
 <body data-page="login">
-  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">User Login</h1><p class="brand-subtitle">GOCO TAWIRAN user access</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
+  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">No Login Mode</h1><p class="brand-subtitle">GOCO TAWIRAN project documentation</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
   <main class="app-shell narrow-shell">
-    <section class="page-heading">
-      <div>
-        <p class="hero-eyebrow">Multi-user tracking</p>
-        <h2>Login as Architect / In-Charge / Inspector</h2>
-        <p>Every saved record will automatically include the logged-in user, role, email, assigned site, and in-charge information.</p>
-      </div>
-    </section>
-
     <section class="panel login-panel">
-      <h3>Current User</h3>
+      <h2>Login system removed</h2>
+      <p class="muted">Records are now tracked using the fields Created By, Project In-Charge, Responsible Person, Site / Zone, Area, and Date.</p>
       <div id="currentUserBox"></div>
-      <button id="logoutBtn" class="btn secondary" type="button">Logout / Switch User</button>
-    </section>
-
-    <form id="loginForm" class="panel login-panel">
-      <h3>Login</h3>
-      <p class="muted">Credentials are managed in the Google Sheet tab named <strong>Users</strong>.</p>
-      <div class="form-grid one-column">
-        <div class="field">
-          <label for="loginEmail">Email / Username</label>
-          <input id="loginEmail" type="text" autocomplete="username" placeholder="example@email.com" required>
-        </div>
-        <div class="field">
-          <label for="loginPin">PIN / Access Code</label>
-          <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4-8 digit PIN" required>
-        </div>
-      </div>
-      <button id="loginBtn" class="btn" type="submit">Login</button>
-      <div id="loginNotice" class="notice"></div>
-    </form>
-
-    <section class="panel">
-      <h3>Default first login</h3>
-      <p class="muted">After running <strong>setupGocoTawiranSheet</strong>, the script creates a sample admin user. Change it immediately in the Users tab.</p>
-      <div class="table-wrap"><table><tbody><tr><th>Email</th><td>admin@goco.local</td></tr><tr><th>PIN</th><td>1234</td></tr><tr><th>Role</th><td>Master Admin</td></tr></tbody></table></div>
+      <a class="btn" href="index.html">Go to Add Record</a>
     </section>
   </main>
   <nav class="bottom-nav" data-bottom-nav></nav>
