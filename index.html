@@ -3,349 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#0f172a">
   <title>GOCO TAWIRAN | Main Menu</title>
   <style>
-    :root {
-      --bg: #f3f4f6;
-      --card: #ffffff;
-      --ink: #111827;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --primary: #1f2a37;
-      --primary-2: #374151;
-      --accent: #f59e0b;
-      --green: #16a34a;
-      --blue: #2563eb;
-      --shadow: 0 18px 45px rgba(17, 24, 39, 0.12);
-      --radius: 22px;
+    :root{
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --primary:#1f2a37;
+      --primary2:#2563eb;
+      --accent:#f59e0b;
+      --ok:#16a34a;
+      --shadow:0 16px 40px rgba(15,23,42,.10);
+      --radius:22px;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.12), transparent 30%),
-        var(--bg);
-      color: var(--ink);
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: rgba(17, 24, 39, 0.95);
-      backdrop-filter: blur(14px);
-      color: white;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .topbar-inner {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .logo {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), #f97316);
-      display: grid;
-      place-items: center;
-      color: #111827;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      flex: 0 0 auto;
-      box-shadow: 0 10px 24px rgba(245, 158, 11, 0.3);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1.15;
-      letter-spacing: 0.04em;
-    }
-
-    .subtitle {
-      margin: 3px 0 0;
-      color: #d1d5db;
-      font-size: 12px;
-    }
-
-    .status-pill {
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 999px;
-      padding: 8px 12px;
-      color: #e5e7eb;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .shell {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 28px 18px 48px;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #111827, #1f2937);
-      color: white;
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: var(--shadow);
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 24px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .hero:after {
-      content: "";
-      position: absolute;
-      width: 280px;
-      height: 280px;
-      border-radius: 999px;
-      background: rgba(245, 158, 11, 0.16);
-      right: -90px;
-      top: -80px;
-    }
-
-    .eyebrow {
-      margin: 0 0 10px;
-      color: #fbbf24;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .hero h2 {
-      margin: 0;
-      font-size: clamp(28px, 5vw, 48px);
-      line-height: 1.02;
-      letter-spacing: -0.05em;
-      max-width: 780px;
-    }
-
-    .hero p {
-      color: #d1d5db;
-      font-size: 15px;
-      line-height: 1.65;
-      max-width: 720px;
-    }
-
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.08);
-      color: #f9fafb;
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-size: 12px;
-    }
-
-    .hero-panel {
-      position: relative;
-      z-index: 1;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 22px;
-      padding: 18px;
-      align-self: stretch;
-      display: grid;
-      align-content: center;
-      gap: 12px;
-    }
-
-    .mini-stat {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 14px;
-    }
-
-    .mini-stat strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
-
-    .mini-stat span {
-      color: #d1d5db;
-      font-size: 12px;
-    }
-
-    .section-title {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 14px;
-      margin: 30px 0 14px;
-    }
-
-    .section-title h3 {
-      margin: 0;
-      font-size: 22px;
-      letter-spacing: -0.03em;
-    }
-
-    .section-title p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .menu-card {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      min-height: 220px;
-      padding: 22px;
-      border-radius: var(--radius);
-      background: var(--card);
-      color: var(--ink);
-      text-decoration: none;
-      border: 1px solid var(--line);
-      box-shadow: 0 12px 26px rgba(17, 24, 39, 0.08);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-      overflow: hidden;
-    }
-
-    .menu-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 18px 40px rgba(17, 24, 39, 0.14);
-      border-color: #cbd5e1;
-    }
-
-    .menu-card:active { transform: translateY(0); }
-
-    .menu-card .icon {
-      width: 54px;
-      height: 54px;
-      border-radius: 18px;
-      display: grid;
-      place-items: center;
-      font-size: 26px;
-      background: #f3f4f6;
-      margin-bottom: 18px;
-    }
-
-    .menu-card h4 {
-      margin: 0;
-      font-size: 23px;
-      line-height: 1.15;
-      letter-spacing: -0.04em;
-    }
-
-    .menu-card p {
-      margin: 10px 0 18px;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 14px;
-    }
-
-    .menu-card .folder {
-      margin-top: auto;
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      gap: 8px;
-      border-radius: 999px;
-      padding: 9px 12px;
-      background: #f9fafb;
-      color: #374151;
-      border: 1px solid var(--line);
-      font-size: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    .menu-card.primary {
-      background: linear-gradient(135deg, #ffffff, #eff6ff);
-      border-color: rgba(37, 99, 235, 0.18);
-    }
-
-    .menu-card.primary .icon { background: #dbeafe; }
-
-    .menu-card.progress {
-      background: linear-gradient(135deg, #ffffff, #ecfdf5);
-      border-color: rgba(22, 163, 74, 0.18);
-    }
-
-    .menu-card.progress .icon { background: #dcfce7; }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .info-card {
-      background: rgba(255,255,255,0.78);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 16px;
-    }
-
-    .info-card strong {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-
-    .info-card span {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    footer {
-      color: var(--muted);
-      text-align: center;
-      font-size: 12px;
-      padding: 22px 10px 0;
-    }
-
-    @media (max-width: 820px) {
-      .topbar-inner { align-items: flex-start; }
-      .status-pill { display: none; }
-      .hero { grid-template-columns: 1fr; padding: 22px; border-radius: 24px; }
-      .menu-grid { grid-template-columns: 1fr; }
-      .info-grid { grid-template-columns: 1fr; }
-      .menu-card { min-height: 190px; }
-    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left,#dbeafe 0,#f4f7fb 35%,#eef2ff 100%)}
+    a{color:inherit;text-decoration:none}
+    .topbar{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .topbar-inner{max-width:1180px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:46px;height:46px;border-radius:16px;background:linear-gradient(135deg,#1f2a37,#2563eb);display:grid;place-items:center;color:white;font-weight:900;letter-spacing:.5px;box-shadow:0 10px 22px rgba(37,99,235,.22)}
+    h1{font-size:18px;line-height:1.1;margin:0;font-weight:850;letter-spacing:.02em}
+    .sub{font-size:12px;color:var(--muted);margin-top:3px}
+    .pill{display:flex;align-items:center;gap:8px;font-size:12px;color:#166534;background:#dcfce7;border:1px solid #bbf7d0;border-radius:999px;padding:8px 12px;white-space:nowrap}
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--ok)}
+    main{max-width:1180px;margin:0 auto;padding:22px 18px 36px}
+    .hero{background:linear-gradient(135deg,#111827,#1f2937 55%,#334155);color:white;border-radius:28px;padding:28px;display:grid;grid-template-columns:1.25fr .75fr;gap:18px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+    .hero:after{content:"";position:absolute;right:-80px;top:-80px;width:240px;height:240px;border-radius:999px;background:rgba(255,255,255,.08)}
+    .eyebrow{color:#bfdbfe;font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin:0 0 8px}
+    .hero h2{font-size:34px;line-height:1.05;margin:0 0 12px;max-width:760px}
+    .hero p{color:#dbeafe;margin:0;font-size:15px;line-height:1.55;max-width:780px}
+    .hero-panel{position:relative;z-index:1;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:16px;align-self:stretch;display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .status-line{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:10px;font-size:13px;color:#e0f2fe}
+    .status-line:last-child{border-bottom:0;padding-bottom:0}
+    .status-line strong{color:white;text-align:right}
+    .section-title{margin:24px 0 12px;display:flex;align-items:end;justify-content:space-between;gap:12px}
+    .section-title h3{margin:0;font-size:18px}
+    .section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 8px 26px rgba(15,23,42,.06);transition:.18s ease;min-height:164px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+    .card:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(15,23,42,.12);border-color:#bfdbfe}
+    .card .icon{width:46px;height:46px;border-radius:16px;background:#eff6ff;display:grid;place-items:center;font-size:23px;margin-bottom:14px}
+    .card h4{margin:0 0 8px;font-size:18px;line-height:1.2}
+    .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+    .card .go{margin-top:16px;color:var(--primary2);font-size:13px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .card.primary{background:linear-gradient(135deg,#eff6ff,#ffffff);border-color:#bfdbfe}
+    .card.warning{background:linear-gradient(135deg,#fff7ed,#ffffff);border-color:#fed7aa}
+    .card.green{background:linear-gradient(135deg,#f0fdf4,#ffffff);border-color:#bbf7d0}
+    .note{margin-top:18px;background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:14px;color:#475569;font-size:13px;line-height:1.55}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin-top:28px}
+    @media (max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h2{font-size:28px}}
+    @media (max-width:640px){.topbar-inner{align-items:flex-start}.pill{display:none}.hero{padding:20px;border-radius:22px}.hero h2{font-size:24px}.grid{grid-template-columns:1fr}.card{min-height:140px}main{padding:16px 12px 28px}.logo{width:42px;height:42px}.section-title{display:block}}
   </style>
 </head>
 <body>
@@ -355,92 +66,131 @@
         <div class="logo">GT</div>
         <div>
           <h1>GOCO TAWIRAN</h1>
-          <p class="subtitle">Main Menu / Project Launcher</p>
+          <div class="sub">Main Menu / App Launcher</div>
         </div>
       </div>
-      <div class="status-pill">No login version • Mobile ready</div>
+      <div class="pill"><span class="dot"></span><span>Ready</span></div>
     </div>
   </header>
 
-  <main class="shell">
+  <main>
     <section class="hero">
       <div>
-        <p class="eyebrow">Construction project system</p>
-        <h2>Piliin kung anong app ang gagamitin sa site.</h2>
-        <p>
-          Ito ang main menu ng GOCO TAWIRAN project. Dito ka papasok sa photo documentation app
-          o sa bagong site progress tracker para makapag-input ng data kada area, may photo proof,
-          punchlist, at project percentage.
-        </p>
-        <div class="hero-meta">
-          <span class="tag">📍 Brgy. Tawiran, Calapan City</span>
-          <span class="tag">🏗 Site inspection</span>
-          <span class="tag">📊 Progress monitoring</span>
-          <span class="tag">📸 Photo documentation</span>
-        </div>
+        <p class="eyebrow">Construction site system</p>
+        <h2>Piliin kung anong module ang bubuksan.</h2>
+        <p>Ito ang main landing page ng GOCO Tawiran system. Use this as the menu papunta sa photo documentation, records, dashboard, reports, and separate progress tracker.</p>
       </div>
-
-      <aside class="hero-panel" aria-label="Project notes">
-        <div class="mini-stat">
-          <strong>Photo Documentation</strong>
-          <span>For site records, issues, approvals, and area notes.</span>
-        </div>
-        <div class="mini-stat">
-          <strong>Progress Tracker</strong>
-          <span>For percent complete per area/trade/category and bossing report.</span>
-        </div>
-      </aside>
+      <div class="hero-panel">
+        <div class="status-line"><span>Project</span><strong>GOCO Tawiran</strong></div>
+        <div class="status-line"><span>Current phase</span><strong>Plastering + Roofing</strong></div>
+        <div class="status-line"><span>Main goal</span><strong>Progress + photo proof</strong></div>
+      </div>
     </section>
 
-    <section>
-      <div class="section-title">
-        <div>
-          <h3>Apps / Folders</h3>
-          <p>Click a card to open the selected folder.</p>
-        </div>
+    <div class="section-title">
+      <div>
+        <h3>Main apps</h3>
+        <p>Use the progress tracker for bossing percentage report. Use documentation app for photo/issue records.</p>
       </div>
+    </div>
 
-      <div class="menu-grid">
-        <a class="menu-card primary" href="goco-tawiran-v6-no-login-full-no-config/index.html">
-          <div class="icon">📸</div>
-          <h4>GOCO Tawiran Documentation App</h4>
-          <p>
-            Existing site inspection/photo board app. Use this for photo issue board, area notes,
-            design approval, site records, and general documentation.
-          </p>
-          <span class="folder">📁 goco-tawiran-v6-no-login-full-no-config</span>
-        </a>
-
-        <a class="menu-card progress" href="tawiran-progress-site-v1/index.html">
+    <section class="grid">
+      <a class="card primary" href="tawiran-progress-site-v1/tawiran-progress-site/index.html">
+        <div>
           <div class="icon">📊</div>
           <h4>Site Progress Tracker</h4>
-          <p>
-            New progress website. Use this to input data per area, attach photos, identify actual percent,
-            track punchlist, and generate project progress for reporting.
-          </p>
-          <span class="folder">📁 tawiran-progress-site-v1</span>
-        </a>
-      </div>
+          <p>Input progress per area/category with photos. Auto-compute overall project percentage and bossing report.</p>
+        </div>
+        <div class="go"><span>Open progress app</span><span>→</span></div>
+      </a>
+
+      <a class="card" href="board.html">
+        <div>
+          <div class="icon">📸</div>
+          <h4>Photo Issue Board</h4>
+          <p>Printable construction photo cards for site issues, concerns, and documentation.</p>
+        </div>
+        <div class="go"><span>Open board</span><span>→</span></div>
+      </a>
+
+      <a class="card" href="dashboard.html">
+        <div>
+          <div class="icon">📍</div>
+          <h4>Documentation Dashboard</h4>
+          <p>View open, critical, action-needed, overdue, and resolved site documentation records.</p>
+        </div>
+        <div class="go"><span>Open dashboard</span><span>→</span></div>
+      </a>
     </section>
 
-    <section class="info-grid" aria-label="How to use">
-      <div class="info-card">
-        <strong>1. Site visit input</strong>
-        <span>Use the progress tracker to record area, category, scope, percentage, issue, and photo.</span>
+    <div class="section-title">
+      <div>
+        <h3>Documentation modules</h3>
+        <p>Existing GOCO Tawiran pages are in the root folder.</p>
       </div>
-      <div class="info-card">
-        <strong>2. Documentation</strong>
-        <span>Use the documentation app for photo cards, approvals, and general site records.</span>
-      </div>
-      <div class="info-card">
-        <strong>3. Bossing report</strong>
-        <span>Use the progress data to present actual project status and remaining works.</span>
-      </div>
+    </div>
+
+    <section class="grid">
+      <a class="card" href="area-notes.html">
+        <div>
+          <div class="icon">🧾</div>
+          <h4>Area Notes</h4>
+          <p>Room-based notes, observations, and inspection reminders per area.</p>
+        </div>
+        <div class="go"><span>Open area notes</span><span>→</span></div>
+      </a>
+
+      <a class="card" href="design-approval.html">
+        <div>
+          <div class="icon">✅</div>
+          <h4>Design Approval</h4>
+          <p>Track owner/design decisions, approvals, and pending confirmations.</p>
+        </div>
+        <div class="go"><span>Open approvals</span><span>→</span></div>
+      </a>
+
+      <a class="card" href="records.html">
+        <div>
+          <div class="icon">📚</div>
+          <h4>Records</h4>
+          <p>View saved site records and documentation logs.</p>
+        </div>
+        <div class="go"><span>Open records</span><span>→</span></div>
+      </a>
+
+      <a class="card green" href="report.html">
+        <div>
+          <div class="icon">📄</div>
+          <h4>Report Generator</h4>
+          <p>Create printable reports from saved documentation records.</p>
+        </div>
+        <div class="go"><span>Open reports</span><span>→</span></div>
+      </a>
+
+      <a class="card warning" href="admin.html">
+        <div>
+          <div class="icon">⚙️</div>
+          <h4>Admin / Setup</h4>
+          <p>Manage setup, sheets connection, settings, and app options.</p>
+        </div>
+        <div class="go"><span>Open admin</span><span>→</span></div>
+      </a>
+
+      <a class="card" href="login.html">
+        <div>
+          <div class="icon">🔐</div>
+          <h4>Login Page</h4>
+          <p>Placeholder login page if you enable roles or access control later.</p>
+        </div>
+        <div class="go"><span>Open login</span><span>→</span></div>
+      </a>
     </section>
 
-    <footer>
-      GOCO TAWIRAN • Main Menu • Upload this file as root index.html
-    </footer>
+    <div class="note">
+      <strong>Folder note:</strong> Based sa current GitHub structure mo, yung documentation app files nasa root folder, while yung progress tracker is inside <code>tawiran-progress-site-v1/tawiran-progress-site/</code>. Kaya ang correct link ng progress tracker ay <code>tawiran-progress-site-v1/tawiran-progress-site/index.html</code>.
+    </div>
+
+    <div class="footer">GOCO Tawiran Site System • Main Menu</div>
   </main>
 </body>
 </html>
