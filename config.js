@@ -9,7 +9,7 @@ window.GOCO_CONFIG = {
   PROJECT_DESCRIPTION: "Two-Storey Residential / Commercial Building",
 
   // Paste your Google Apps Script Web App URL here.
-  APPS_SCRIPT_URL: "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby7SRMoHU5Q8WmN7PkwEPXzI2JUE9GOU08VLDh8mB7PCQc0-6w5q9AEr8hgt366_-2VDg/exec",
 
   // Keeps a device backup in browser storage. Helpful when signal is weak on site.
   ENABLE_LOCAL_BACKUP: true,
