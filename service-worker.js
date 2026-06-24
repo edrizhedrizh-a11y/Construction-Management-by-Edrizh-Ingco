@@ -1,12 +1,15 @@
-const CACHE_NAME = "goco-tawiran-site-v4-team-folder";
+const CACHE_NAME = "goco-tawiran-site-v5-login-report";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./board.html",
+  "./report.html",
   "./design-approval.html",
   "./area-notes.html",
   "./dashboard.html",
   "./records.html",
+  "./admin.html",
+  "./login.html",
   "./style.css",
   "./app.js",
   "./config.js",
@@ -30,15 +33,14 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.origin !== location.origin) return;
 
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-        return response;
-      }).catch(() => caches.match("./index.html"));
-    })
+    fetch(request, { cache: "no-store" }).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+      return response;
+    }).catch(() => caches.match(request).then(cached => cached || caches.match("./index.html")))
   );
 });

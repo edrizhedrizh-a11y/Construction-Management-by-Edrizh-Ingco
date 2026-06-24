@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2a37">
+  <title>Report Export | GOCO TAWIRAN</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body data-page="report">
+  <div class="topbar"><div class="topbar-inner"><div class="brand-block"><div class="logo-mark">GT</div><div><h1 class="brand-title">A4 Report Export</h1><p class="brand-subtitle">Board JPG for Messenger and Drive</p></div></div><nav class="desktop-nav" data-nav></nav><div class="sync-pill" data-sync-pill><span class="sync-dot"></span><span data-sync-label>Checking</span></div></div></div>
+  <main class="app-shell">
+    <section class="page-heading">
+      <div>
+        <p class="hero-eyebrow">Boss report generator</p>
+        <h2>A4 Board Report as JPG</h2>
+        <p>Generate printable A4 report pages with 1, 2, 4, or 6 cards per page. Download as JPG for Messenger or upload directly to Google Drive.</p>
+      </div>
+      <div class="page-actions no-print">
+        <button class="btn secondary" data-refresh>Refresh</button>
+        <button class="btn warning" onclick="window.print()">Print Page</button>
+      </div>
+    </section>
+
+    <section class="panel report-controls no-print">
+      <div class="form-grid">
+        <div class="field">
+          <label for="reportTitle">Report Title</label>
+          <input id="reportTitle" value="GOCO TAWIRAN SITE INSPECTION REPORT">
+        </div>
+        <div class="field">
+          <label for="reportType">Board Type</label>
+          <select id="reportType">
+            <option value="photo-board">Photo Issue Board</option>
+            <option value="design-approval">Design Approval Board</option>
+            <option value="area-notes">Area Notes Board</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cardsPerPage">Cards per A4 JPG</label>
+          <select id="cardsPerPage">
+            <option value="4" selected>4 cards per A4</option>
+            <option value="6">6 cards per A4</option>
+            <option value="2">2 cards per A4</option>
+            <option value="1">1 detailed card per A4</option>
+          </select>
+        </div>
+      </div>
+      <p id="reportCount" class="muted">Loading records...</p>
+      <div class="button-row">
+        <button id="generateReportBtn" class="btn" type="button">Generate A4 JPG</button>
+        <button id="uploadReportBtn" class="btn secondary" type="button" disabled>Upload JPG to Google Drive</button>
+      </div>
+      <div id="reportUploadStatus"></div>
+    </section>
+
+    <section class="filter-panel no-print" data-filter-panel></section>
+    <section id="reportPreview" class="report-preview"></section>
+  </main>
+  <nav class="bottom-nav" data-bottom-nav></nav>
+</body>
+</html>

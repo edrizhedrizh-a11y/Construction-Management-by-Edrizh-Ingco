@@ -9,6 +9,9 @@
   const PROJECT_ARCHITECT_KEY = "goco_tawiran_project_architect";
   const PROJECT_IN_CHARGE_KEY = "goco_tawiran_project_in_charge";
   const SITE_ZONE_KEY = "goco_tawiran_site_zone";
+  const USER_SESSION_KEY = "goco_tawiran_user_session_v5";
+  const IMAGE_CACHE_KEY = "goco_tawiran_image_cache_v1";
+
 
   const LOOKUPS = {
     floorLevels: ["Ground Floor", "Second Floor", "Roof", "Exterior / Facade", "Site / Yard", "General"],
@@ -45,10 +48,13 @@
   const NAV = [
     { page: "home", href: "index.html", icon: "＋", label: "Add" },
     { page: "photo-board", href: "board.html", icon: "▦", label: "Board" },
+    { page: "report", href: "report.html", icon: "▣", label: "Report" },
     { page: "design-approval", href: "design-approval.html", icon: "✓", label: "Approval" },
     { page: "area-notes", href: "area-notes.html", icon: "⌖", label: "Notes" },
     { page: "dashboard", href: "dashboard.html", icon: "◷", label: "Dash" },
-    { page: "records", href: "records.html", icon: "☰", label: "Log" }
+    { page: "records", href: "records.html", icon: "☰", label: "Log" },
+    { page: "admin", href: "admin.html", icon: "◎", label: "Admin" },
+    { page: "login", href: "login.html", icon: "👤", label: "User" }
   ];
 
   const DISPLAY_COLUMNS = [
@@ -56,7 +62,7 @@
     "Floor Level", "Area", "Room / Location", "Trade / Scope", "Category", "Status", "Priority", "Severity",
     "Progress %", "Drawing Reference", "Responsible Person", "Target Date", "Issue / Concern / Note",
     "Schedule Impact", "Cost Impact", "Photo URL", "Google Drive File ID", "Photo Folder Path", "Google Drive Folder ID",
-    "Date Resolved", "Verified By", "Remarks", "Created By", "Timestamp"
+    "Date Resolved", "Verified By", "Remarks", "Created By", "Created By Email", "User ID", "User Role", "Timestamp"
   ];
 
   let activeRecords = [];
@@ -66,6 +72,7 @@
   function init() {
     registerServiceWorker();
     renderNavigation();
+    renderUserPill();
     updateSyncPill();
     window.addEventListener("online", updateSyncPill);
     window.addEventListener("offline", updateSyncPill);
@@ -73,10 +80,15 @@
     const page = document.body.dataset.page;
     document.querySelectorAll("[data-refresh]").forEach(btn => btn.addEventListener("click", () => location.reload()));
 
+    if (!ensureLoginForPage(page)) return;
+
+    if (page === "login") initLoginPage();
     if (page === "home") initFormPage();
     if (["photo-board", "design-approval", "area-notes"].includes(page)) initBoardPage(page);
+    if (page === "report") initReportPage();
     if (page === "dashboard") initDashboardPage();
     if (page === "records") initRecordsPage();
+    if (page === "admin") initAdminPage();
   }
 
   function registerServiceWorker() {
@@ -94,6 +106,20 @@
     `).join("");
 
     document.querySelectorAll("[data-nav], [data-bottom-nav]").forEach(nav => { nav.innerHTML = navHtml; });
+  }
+
+  function renderUserPill() {
+    const topbar = document.querySelector(".topbar-inner");
+    if (!topbar || topbar.querySelector(".user-pill")) return;
+    const user = getCurrentUser();
+    const href = user ? "login.html" : "login.html";
+    const label = user ? `${user.fullName || user.email || "User"}` : "Login";
+    const role = user ? (user.role || "User") : "Required";
+    const link = document.createElement("a");
+    link.className = "user-pill no-print";
+    link.href = href;
+    link.innerHTML = `<span class="user-avatar">${escapeHtml(getInitials(label))}</span><span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(role)}</small></span>`;
+    topbar.appendChild(link);
   }
 
   function updateSyncPill(message) {
@@ -164,8 +190,10 @@
     setValue("drawingReference", "Not Applicable");
     setValue("projectArchitect", localStorage.getItem(PROJECT_ARCHITECT_KEY) || CFG.PROJECT_ARCHITECT || "");
     setValue("projectInCharge", localStorage.getItem(PROJECT_IN_CHARGE_KEY) || CFG.PROJECT_IN_CHARGE || "");
-    setValue("siteZone", localStorage.getItem(SITE_ZONE_KEY) || CFG.DEFAULT_SITE_ZONE || CFG.PROJECT_LOCATION || "Brgy. Tawiran, Calapan City");
-    setValue("createdBy", localStorage.getItem(CREATED_BY_KEY) || "");
+    const user = getCurrentUser();
+    setValue("siteZone", localStorage.getItem(SITE_ZONE_KEY) || user?.assignedSite || CFG.DEFAULT_SITE_ZONE || CFG.PROJECT_LOCATION || "Brgy. Tawiran, Calapan City");
+    setValue("createdBy", user?.fullName || localStorage.getItem(CREATED_BY_KEY) || "");
+    setValue("projectInCharge", localStorage.getItem(PROJECT_IN_CHARGE_KEY) || user?.fullName || CFG.PROJECT_IN_CHARGE || "");
   }
 
   function setValue(id, value) {
@@ -296,6 +324,15 @@
     record["Google Drive File ID"] = "";
     record["Photo Folder Path"] = record["Photo Folder Path"] || "";
     record["Google Drive Folder ID"] = record["Google Drive Folder ID"] || "";
+    const user = getCurrentUser();
+    if (user) {
+      record["Created By"] = record["Created By"] || user.fullName || "";
+      record["Created By Email"] = user.email || "";
+      record["User ID"] = user.userId || "";
+      record["User Role"] = user.role || "";
+      record["Project In-Charge"] = record["Project In-Charge"] || user.fullName || "";
+      record["Site / Zone"] = record["Site / Zone"] || user.assignedSite || "";
+    }
     return record;
   }
 
@@ -309,11 +346,15 @@
   }
 
   async function postToAppsScript(payload) {
+    const bodyPayload = { ...payload };
+    const token = getSessionToken();
+    if (token && bodyPayload.action !== "login") bodyPayload.sessionToken = token;
+
     const response = await fetch(CFG.APPS_SCRIPT_URL, {
       method: "POST",
       redirect: "follow",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(bodyPayload)
     });
 
     const text = await response.text();
@@ -359,12 +400,13 @@
     if (!panel) return;
     panel.innerHTML = `
       <div class="filter-grid">
-        <div class="field"><label>Search</label><input id="filterSearch" placeholder="Issue, area, note, ID..."></div>
+        <div class="field"><label>Search</label><input id="filterSearch" placeholder="Issue, area, note, ID, user..."></div>
         <div class="field"><label>Status</label><select id="filterStatus"><option value="">All statuses</option>${optionsHtml(LOOKUPS.statuses)}</select></div>
         <div class="field"><label>Floor</label><select id="filterFloor"><option value="">All floors</option>${optionsHtml(LOOKUPS.floorLevels)}</select></div>
         <div class="field"><label>Area</label><select id="filterArea"><option value="">All areas</option>${optionsHtml(LOOKUPS.areas)}</select></div>
         <div class="field"><label>Trade</label><select id="filterTrade"><option value="">All trades</option>${optionsHtml(LOOKUPS.trades)}</select></div>
         <div class="field"><label>Category</label><select id="filterCategory"><option value="">All categories</option>${optionsHtml(LOOKUPS.categories)}</select></div>
+        <div class="field"><label>In-Charge / Created By</label><input id="filterUser" placeholder="Name or email"></div>
       </div>
     `;
   }
@@ -373,11 +415,11 @@
     return values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
   }
 
-  async function loadRecords() {
+  async function loadRecords(sheetName = "Issue Records") {
     let remoteRecords = [];
     if (isApiConfigured() && navigator.onLine) {
       try {
-        remoteRecords = await getRecordsFromApi();
+        remoteRecords = await getRecordsFromApi(sheetName);
         updateSyncPill("Synced");
       } catch (error) {
         console.warn(error);
@@ -385,14 +427,18 @@
       }
     }
 
+    if (sheetName !== "Issue Records") return sortRecordsDesc(remoteRecords);
     const localRecords = getLocalRecords();
     const merged = mergeRecords(remoteRecords, localRecords);
     return sortRecordsDesc(merged);
   }
 
-  async function getRecordsFromApi() {
+  async function getRecordsFromApi(sheetName = "Issue Records") {
     const baseUrl = CFG.APPS_SCRIPT_URL;
-    const url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}action=listRecords&sheet=Issue%20Records&t=${Date.now()}`;
+    const token = getSessionToken();
+    const params = new URLSearchParams({ action: "listRecords", sheet: sheetName, t: Date.now().toString() });
+    if (token) params.set("sessionToken", token);
+    const url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}${params.toString()}`;
 
     try {
       const response = await fetch(url, { method: "GET", cache: "no-store", redirect: "follow" });
@@ -536,6 +582,529 @@
     }).join("");
   }
 
+
+  function requiresLogin() {
+    return CFG.REQUIRE_LOGIN !== false;
+  }
+
+  function getCurrentUser() {
+    try {
+      const session = JSON.parse(localStorage.getItem(USER_SESSION_KEY) || "null");
+      return session && session.user ? session.user : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function getCurrentSession() {
+    try {
+      return JSON.parse(localStorage.getItem(USER_SESSION_KEY) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function getSessionToken() {
+    return getCurrentSession()?.sessionToken || "";
+  }
+
+  function ensureLoginForPage(page) {
+    if (!requiresLogin() || page === "login") return true;
+    if (!isApiConfigured()) return true;
+    if (getCurrentUser()) return true;
+    const next = encodeURIComponent(location.pathname.split("/").pop() || "index.html");
+    location.href = `login.html?next=${next}`;
+    return false;
+  }
+
+  function getInitials(value) {
+    const parts = String(value || "GT").trim().split(/\s+/).filter(Boolean);
+    return (parts[0]?.[0] || "G").toUpperCase() + (parts[1]?.[0] || "T").toUpperCase();
+  }
+
+  function initLoginPage() {
+    const session = getCurrentSession();
+    const form = document.getElementById("loginForm");
+    const notice = document.getElementById("loginNotice");
+    const currentBox = document.getElementById("currentUserBox");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (currentBox) {
+      const user = session?.user;
+      currentBox.innerHTML = user ? `
+        <div class="current-user-card">
+          <div class="user-avatar big">${escapeHtml(getInitials(user.fullName || user.email))}</div>
+          <div>
+            <h3>${escapeHtml(user.fullName || user.email)}</h3>
+            <p>${escapeHtml(user.role || "User")} · ${escapeHtml(user.email || "")}</p>
+            <p>Site: <strong>${escapeHtml(user.assignedSite || "All")}</strong> · Area: <strong>${escapeHtml(user.assignedArea || "All")}</strong></p>
+          </div>
+        </div>` : `<div class="empty-state">No active user session. Login using the Users tab credentials from Google Sheet.</div>`;
+    }
+
+    if (logoutBtn) logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem(USER_SESSION_KEY);
+      showLoginNotice("Logged out. You can login again below.", "warn");
+      setTimeout(() => location.reload(), 400);
+    });
+
+    if (form) form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const btn = document.getElementById("loginBtn");
+      if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
+      try {
+        if (!isApiConfigured()) throw new Error("Apps Script URL is not configured yet.");
+        const email = document.getElementById("loginEmail")?.value.trim();
+        const pin = document.getElementById("loginPin")?.value.trim();
+        const result = await postToAppsScript({ action: "login", email, pin });
+        if (!result || result.ok === false) throw new Error(result?.message || "Login failed.");
+        localStorage.setItem(USER_SESSION_KEY, JSON.stringify({ sessionToken: result.sessionToken, user: result.user, loginAt: new Date().toISOString() }));
+        showLoginNotice(`Welcome, ${result.user.fullName || result.user.email}.`, "ok");
+        const next = new URLSearchParams(location.search).get("next") || "index.html";
+        setTimeout(() => { location.href = next; }, 500);
+      } catch (error) {
+        showLoginNotice(error.message, "error");
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Login"; }
+      }
+    });
+
+    function showLoginNotice(message, type) {
+      if (!notice) return;
+      notice.textContent = message;
+      notice.className = `notice show ${type || "ok"}`;
+    }
+  }
+
+  async function initAdminPage() {
+    activeRecords = await loadRecords();
+    renderAdminPage(activeRecords);
+    try {
+      const exports = await loadRecords("Report Exports");
+      renderReportExportLog(exports);
+    } catch (error) {
+      const el = document.getElementById("reportExportLog");
+      if (el) el.innerHTML = `<div class="empty-state">Report export log not available yet.</div>`;
+    }
+  }
+
+  function renderAdminPage(records) {
+    const user = getCurrentUser();
+    const box = document.getElementById("adminUserBox");
+    if (box) {
+      box.innerHTML = user ? `
+        <div class="current-user-card">
+          <div class="user-avatar big">${escapeHtml(getInitials(user.fullName || user.email))}</div>
+          <div>
+            <h3>${escapeHtml(user.fullName || user.email)}</h3>
+            <p>${escapeHtml(user.role || "User")} · ${escapeHtml(user.email || "")}</p>
+            <p>View all: <strong>${user.canViewAll ? "Yes" : "No"}</strong> · Export reports: <strong>${user.canExportReports ? "Yes" : "No"}</strong></p>
+          </div>
+        </div>` : `<div class="empty-state">No user session found.</div>`;
+    }
+
+    renderBars("adminUserBars", groupCountMulti(records, ["Created By", "Project In-Charge", "Responsible Person"]));
+    renderBars("adminStatusBars", groupCount(records, "Status"));
+    renderBars("adminAreaBars", groupCount(records, "Area"));
+  }
+
+  function groupCountMulti(records, keys) {
+    const map = new Map();
+    records.forEach(record => {
+      const label = keys.map(k => field(record, k)).find(Boolean) || "Not specified";
+      map.set(label, (map.get(label) || 0) + 1);
+    });
+    return Array.from(map, ([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  }
+
+  function renderReportExportLog(records) {
+    const el = document.getElementById("reportExportLog");
+    if (!el) return;
+    if (!records.length) {
+      el.innerHTML = `<div class="empty-state">No report exports yet. Export a JPG from the Report page.</div>`;
+      return;
+    }
+    const rows = records.slice(0, 20).map(r => `
+      <tr>
+        <td>${escapeHtml(field(r, "Timestamp") || field(r, "Date"))}</td>
+        <td>${escapeHtml(field(r, "Report Type") || "Board")}</td>
+        <td>${field(r, "File URL") ? `<a href="${escapeAttr(field(r, "File URL"))}" target="_blank" rel="noopener">${escapeHtml(field(r, "File Name") || "Open JPG")}</a>` : escapeHtml(field(r, "File Name"))}</td>
+        <td>${escapeHtml(field(r, "Exported By"))}</td>
+        <td>${escapeHtml(field(r, "Layout"))}</td>
+      </tr>`).join("");
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>File</th><th>Exported By</th><th>Layout</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  async function initReportPage() {
+    setupFilterPanel();
+    activeRecords = await loadRecords();
+    updateReportCount();
+    const panel = document.querySelector("[data-filter-panel]");
+    panel?.addEventListener("input", updateReportCount);
+    panel?.addEventListener("change", updateReportCount);
+    document.getElementById("generateReportBtn")?.addEventListener("click", generateReportPreview);
+    document.getElementById("uploadReportBtn")?.addEventListener("click", uploadGeneratedReports);
+  }
+
+  function getReportRecords() {
+    const type = document.getElementById("reportType")?.value || "photo-board";
+    return applyPageFilter(type, applyFilters(activeRecords));
+  }
+
+  function updateReportCount() {
+    const el = document.getElementById("reportCount");
+    if (!el) return;
+    const count = getReportRecords().length;
+    el.textContent = `${count} record${count === 1 ? "" : "s"} ready for report export.`;
+  }
+
+  async function generateReportPreview() {
+    const btn = document.getElementById("generateReportBtn");
+    const uploadBtn = document.getElementById("uploadReportBtn");
+    const output = document.getElementById("reportPreview");
+    if (!output) return;
+    const user = getCurrentUser();
+    if (requiresLogin() && !user) {
+      output.innerHTML = `<div class="empty-state">Login first before exporting reports.</div>`;
+      return;
+    }
+    const records = getReportRecords();
+    if (!records.length) {
+      output.innerHTML = `<div class="empty-state">No records matched your report filters.</div>`;
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = "Generating JPG..."; }
+    output.innerHTML = `<div class="empty-state">Preparing A4 board JPG pages. Loading Drive images...</div>`;
+    try {
+      const perPage = Number(document.getElementById("cardsPerPage")?.value || 4);
+      const title = document.getElementById("reportTitle")?.value || "GOCO TAWIRAN SITE INSPECTION REPORT";
+      const pages = await createReportCanvases(records, { perPage, title });
+      window.gocoGeneratedReports = pages;
+      output.innerHTML = pages.map((page, index) => {
+        const url = page.canvas.toDataURL("image/jpeg", 0.92);
+        page.dataUrl = url;
+        return `
+          <article class="report-output-card">
+            <div class="report-output-head"><strong>Page ${index + 1}</strong><span>${escapeHtml(page.fileName)}</span></div>
+            <img class="report-page-img" src="${url}" alt="A4 report page ${index + 1}">
+            <button class="btn secondary" type="button" data-download-report="${index}">Download JPG Page ${index + 1}</button>
+          </article>`;
+      }).join("");
+      output.querySelectorAll("[data-download-report]").forEach(button => {
+        button.addEventListener("click", () => downloadDataUrl(pages[Number(button.dataset.downloadReport)].dataUrl, pages[Number(button.dataset.downloadReport)].fileName));
+      });
+      if (uploadBtn) uploadBtn.disabled = false;
+    } catch (error) {
+      console.error(error);
+      output.innerHTML = `<div class="empty-state error-text">Could not generate report: ${escapeHtml(error.message)}</div>`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Generate A4 JPG"; }
+    }
+  }
+
+  async function createReportCanvases(records, opts) {
+    const perPage = Number(opts.perPage || 4);
+    const title = opts.title || "GOCO TAWIRAN SITE INSPECTION REPORT";
+    const pages = [];
+    const width = 1240;
+    const height = 1754;
+    const now = new Date();
+    const exportedBy = getCurrentUser()?.fullName || localStorage.getItem(CREATED_BY_KEY) || "";
+    const type = document.getElementById("reportType")?.value || "photo-board";
+    const chunks = chunk(records, perPage);
+
+    for (let p = 0; p < chunks.length; p++) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(0, 0, width, 92);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 34px Arial";
+      ctx.fillText(title.toUpperCase(), 42, 40);
+      ctx.font = "18px Arial";
+      ctx.fillText(`${PROJECT_NAME} · ${CFG.PROJECT_LOCATION || "Brgy. Tawiran, Calapan City"}`, 42, 68);
+      ctx.textAlign = "right";
+      ctx.fillText(`Page ${p + 1} of ${chunks.length}`, width - 42, 40);
+      ctx.fillText(`Generated: ${formatPrettyDate(formatInputDate(now))} ${formatInputTime(now)}`, width - 42, 68);
+      ctx.textAlign = "left";
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 92, width, 54);
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 17px Arial";
+      ctx.fillText(`Report Type: ${typeLabel(type)}  |  Cards per A4: ${perPage}  |  Exported by: ${exportedBy || "—"}`, 42, 126);
+
+      const margin = 34;
+      const top = 164;
+      const gap = 18;
+      const cols = perPage === 1 ? 1 : 2;
+      const rows = Math.ceil(perPage / cols);
+      const cardW = (width - margin * 2 - gap * (cols - 1)) / cols;
+      const cardH = (height - top - 44 - gap * (rows - 1)) / rows;
+
+      for (let i = 0; i < chunks[p].length; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = margin + col * (cardW + gap);
+        const y = top + row * (cardH + gap);
+        const imageData = await getRecordImageData(chunks[p][i]);
+        await drawReportCard(ctx, chunks[p][i], x, y, cardW, cardH, imageData, type);
+      }
+
+      const safeDate = formatDateId(now);
+      const fileName = `GOCO_TAWIRAN_${typeLabel(type).replace(/\s+/g, "_")}_${safeDate}_PAGE_${String(p + 1).padStart(2, "0")}.jpg`;
+      pages.push({ canvas, fileName, recordCount: chunks[p].length, pageNumber: p + 1, totalPages: chunks.length, layout: `${perPage} cards per A4`, reportType: typeLabel(type) });
+    }
+    return pages;
+  }
+
+  async function drawReportCard(ctx, record, x, y, w, h, imageData, type) {
+    ctx.save();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(x, y, w, 38);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(typeLabel(type).toUpperCase(), x + w / 2, y + 25);
+    ctx.textAlign = "left";
+
+    const metaY = y + 38;
+    const labelW = w * 0.28;
+    const valueW = w * 0.22;
+    const rowH = 50;
+    drawMetaCell(ctx, x, metaY, labelW, rowH, "FLOOR LEVEL", true);
+    drawMetaCell(ctx, x + labelW, metaY, valueW, rowH, field(record, "Floor Level") || "—", false);
+    drawMetaCell(ctx, x + labelW + valueW, metaY, labelW, rowH, "AREA", true);
+    drawMetaCell(ctx, x + labelW + valueW + labelW, metaY, w - labelW * 2 - valueW, rowH, field(record, "Area") || "—", false);
+    drawMetaCell(ctx, x, metaY + rowH, labelW, rowH, "TRADE / SCOPE", true);
+    drawMetaCell(ctx, x + labelW, metaY + rowH, valueW, rowH, field(record, "Trade / Scope") || "—", false);
+    drawMetaCell(ctx, x + labelW + valueW, metaY + rowH, labelW, rowH, "DATE", true);
+    drawMetaCell(ctx, x + labelW + valueW + labelW, metaY + rowH, w - labelW * 2 - valueW, rowH, [formatPrettyDate(field(record, "Date")), field(record, "Time")].filter(Boolean).join(" · ") || "—", false);
+
+    const imageY = metaY + rowH * 2;
+    const imageH = Math.max(120, h * 0.43);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(x, imageY, w, imageH);
+    ctx.strokeStyle = "#3b82f6";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, imageY, w, imageH);
+    if (imageData) {
+      try {
+        const img = await loadImage(imageData);
+        drawCoverImage(ctx, img, x + 2, imageY + 2, w - 4, imageH - 4);
+      } catch {
+        drawPlaceholder(ctx, x, imageY, w, imageH, "PHOTO NOT AVAILABLE");
+      }
+    } else {
+      drawPlaceholder(ctx, x, imageY, w, imageH, "INSERT PHOTO HERE");
+    }
+
+    const statY = imageY + imageH;
+    const statH = 48;
+    drawStatusCell(ctx, x, statY, w * 0.33, statH, field(record, "Progress %") || "0%", "#fee2e2", "#b91c1c");
+    drawStatusCell(ctx, x + w * 0.33, statY, w * 0.34, statH, field(record, "Status") || "OPEN", "#fef3c7", "#92400e");
+    drawStatusCell(ctx, x + w * 0.67, statY, w * 0.33, statH, [field(record, "Issue ID"), field(record, "Photo ID")].filter(Boolean).join(" / ") || field(record, "Record ID"), "#e5e7eb", "#111827");
+
+    const infoY = statY + statH + 18;
+    ctx.fillStyle = "#374151";
+    ctx.font = "14px Arial";
+    wrapCanvasText(ctx, `Priority: ${field(record, "Priority") || "Medium"}    Severity: ${field(record, "Severity") || "Medium"}    Drawing: ${field(record, "Drawing Reference") || "N/A"}`, x + 14, infoY, w - 28, 18, 2);
+    wrapCanvasText(ctx, `In-Charge: ${field(record, "Project In-Charge") || field(record, "Responsible Person") || field(record, "Created By") || "—"}`, x + 14, infoY + 36, w - 28, 18, 2);
+
+    const noteY = infoY + 74;
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "bold 14px Arial";
+    ctx.fillText(type === "design-approval" ? "APPROVAL / DECISION NOTE" : type === "area-notes" ? "AREA INSPECTION NOTE" : "CONCERN / ISSUE / NOTE", x + 14, noteY);
+    ctx.strokeStyle = "#d1d5db";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 14, noteY + 8); ctx.lineTo(x + w - 14, noteY + 8); ctx.stroke();
+    ctx.fillStyle = "#111827";
+    ctx.font = "15px Arial";
+    wrapCanvasText(ctx, field(record, "Issue / Concern / Note") || "No note entered.", x + 14, noteY + 32, w - 28, 20, 5);
+
+    ctx.fillStyle = "#374151";
+    ctx.font = "12px Arial";
+    ctx.fillText(`Architect: ${field(record, "Project Architect") || "—"}`, x + 14, y + h - 42);
+    ctx.fillText(`Created by: ${field(record, "Created By") || "—"}`, x + 14, y + h - 24);
+    ctx.restore();
+  }
+
+  function drawMetaCell(ctx, x, y, w, h, text, isLabel) {
+    ctx.fillStyle = isLabel ? "#374151" : "#ffffff";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "#d1d5db";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = isLabel ? "#ffffff" : "#111827";
+    ctx.font = isLabel ? "bold 14px Arial" : "bold 14px Arial";
+    ctx.textAlign = "center";
+    wrapCanvasText(ctx, String(text || "—"), x + 6, y + 18, w - 12, 16, 2, true);
+    ctx.textAlign = "left";
+  }
+
+  function drawStatusCell(ctx, x, y, w, h, text, bg, fg) {
+    ctx.fillStyle = bg;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "#d1d5db";
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = fg;
+    ctx.font = "bold 15px Arial";
+    ctx.textAlign = "center";
+    wrapCanvasText(ctx, String(text || "—").toUpperCase(), x + 8, y + 19, w - 16, 17, 2, true);
+    ctx.textAlign = "left";
+  }
+
+  function drawPlaceholder(ctx, x, y, w, h, text) {
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "bold 18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(text, x + w / 2, y + h / 2);
+    ctx.textAlign = "left";
+  }
+
+  function drawCoverImage(ctx, img, x, y, w, h) {
+    const scale = Math.max(w / img.width, h / img.height);
+    const sw = w / scale;
+    const sh = h / scale;
+    const sx = (img.width - sw) / 2;
+    const sy = (img.height - sh) / 2;
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines, centered) {
+    const words = String(text || "").split(/\s+/);
+    let line = "";
+    let lineNo = 0;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line ? line + " " + words[n] : words[n];
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        ctx.fillText(lineNo === maxLines - 1 && n < words.length ? line + "…" : line, centered ? x + maxWidth / 2 : x, y + lineNo * lineHeight);
+        line = words[n];
+        lineNo++;
+        if (lineNo >= maxLines) return;
+      } else {
+        line = testLine;
+      }
+    }
+    if (lineNo < maxLines) ctx.fillText(line, centered ? x + maxWidth / 2 : x, y + lineNo * lineHeight);
+  }
+
+  function chunk(items, size) {
+    const out = [];
+    for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+    return out;
+  }
+
+  function typeLabel(type) {
+    if (type === "design-approval") return "Design Approval Board";
+    if (type === "area-notes") return "Area Notes Board";
+    return "Photo Issue Board";
+  }
+
+  async function getRecordImageData(record) {
+    const fileId = field(record, "Google Drive File ID") || extractDriveFileId(field(record, "Photo URL"));
+    if (!fileId) return "";
+    const cacheKey = `img_${fileId}`;
+    try {
+      const cache = JSON.parse(sessionStorage.getItem(IMAGE_CACHE_KEY) || "{}");
+      if (cache[cacheKey]) return cache[cacheKey];
+    } catch {}
+    if (isApiConfigured()) {
+      try {
+        const result = await postToAppsScript({ action: "getImageData", fileId });
+        if (result && result.ok && result.dataUrl) {
+          try {
+            const cache = JSON.parse(sessionStorage.getItem(IMAGE_CACHE_KEY) || "{}");
+            cache[cacheKey] = result.dataUrl;
+            sessionStorage.setItem(IMAGE_CACHE_KEY, JSON.stringify(cache));
+          } catch {}
+          return result.dataUrl;
+        }
+      } catch (error) {
+        console.warn("Image proxy failed", error);
+      }
+    }
+    return getDisplayPhotoUrl(record);
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      if (!src) return reject(new Error("No image source"));
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
+      img.src = src;
+    });
+  }
+
+  function downloadDataUrl(dataUrl, fileName) {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  async function uploadGeneratedReports() {
+    const pages = window.gocoGeneratedReports || [];
+    const btn = document.getElementById("uploadReportBtn");
+    const status = document.getElementById("reportUploadStatus");
+    const user = getCurrentUser();
+    if (!pages.length) {
+      if (status) status.innerHTML = `<div class="notice show warn">Generate the JPG report first.</div>`;
+      return;
+    }
+    if (user && user.canExportReports === false) {
+      if (status) status.innerHTML = `<div class="notice show error">Your account is not allowed to export reports.</div>`;
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = "Uploading to Drive..."; }
+    const links = [];
+    try {
+      for (const page of pages) {
+        const dataUrl = page.dataUrl || page.canvas.toDataURL("image/jpeg", 0.92);
+        const result = await postToAppsScript({
+          action: "uploadReport",
+          report: {
+            reportType: page.reportType,
+            layout: page.layout,
+            fileName: page.fileName,
+            mimeType: "image/jpeg",
+            data: dataUrl.split(",")[1],
+            recordCount: page.recordCount,
+            pageNumber: page.pageNumber,
+            totalPages: page.totalPages,
+            filters: collectFilterSummary()
+          }
+        });
+        if (!result || result.ok === false) throw new Error(result?.message || "Report upload failed.");
+        links.push(`<a href="${escapeAttr(result.fileUrl)}" target="_blank" rel="noopener">${escapeHtml(result.fileName)}</a>`);
+      }
+      if (status) status.innerHTML = `<div class="notice show ok">Uploaded to Google Drive: ${links.join(" · ")}</div>`;
+    } catch (error) {
+      if (status) status.innerHTML = `<div class="notice show error">Upload failed: ${escapeHtml(error.message)}</div>`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Upload JPG to Google Drive"; }
+    }
+  }
+
+  function collectFilterSummary() {
+    const ids = ["filterSearch", "filterStatus", "filterFloor", "filterArea", "filterTrade", "filterCategory", "filterUser", "cardsPerPage", "reportType"];
+    return ids.map(id => `${id}:${document.getElementById(id)?.value || ""}`).join(" | ");
+  }
+
   function progressClass(value) {
     return `p-${String(value || "0").replace("%", "")}`;
   }
@@ -567,15 +1136,18 @@
     const area = document.getElementById("filterArea")?.value || "";
     const trade = document.getElementById("filterTrade")?.value || "";
     const category = document.getElementById("filterCategory")?.value || "";
+    const userFilter = (document.getElementById("filterUser")?.value || "").toLowerCase().trim();
 
     return records.filter(record => {
       const matchesSearch = !search || DISPLAY_COLUMNS.some(col => String(field(record, col) || "").toLowerCase().includes(search));
+      const userHaystack = [field(record, "Created By"), field(record, "Created By Email"), field(record, "Project In-Charge"), field(record, "Responsible Person"), field(record, "User Role")].join(" ").toLowerCase();
       return matchesSearch
         && (!status || field(record, "Status") === status)
         && (!floor || field(record, "Floor Level") === floor)
         && (!area || field(record, "Area") === area)
         && (!trade || field(record, "Trade / Scope") === trade)
-        && (!category || field(record, "Category") === category);
+        && (!category || field(record, "Category") === category)
+        && (!userFilter || userHaystack.includes(userFilter));
     });
   }
 
